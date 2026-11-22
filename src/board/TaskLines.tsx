@@ -26,6 +26,8 @@ type Props = {
   contents: { unfinished: Task[]; done: Task[] };
   onAdd(title: string): void;
   taskActions: TaskLineActions;
+  /** A Past day: no adding, ticking, unticking or dragging in or out. Clicking a Task shows it read-only. */
+  readOnly?: boolean;
 };
 
 /**
@@ -33,12 +35,15 @@ type Props = {
  * the top; clicking any empty Line opens an input on the Line a new Task
  * snaps to. The column scrolls when full, always keeping one empty Line.
  * Tasks are dragged within and between columns; the whole body takes drops.
+ * A read-only column keeps its ruled Lines, but they do nothing.
  */
-export function TaskLines({ place, contents: { unfinished, done }, onAdd, taskActions }: Props) {
+export function TaskLines({ place, contents: { unfinished, done }, onAdd, taskActions, readOnly = false }: Props) {
   const [adding, setAdding] = useState(false);
   const [containerRef, height] = useHeight<HTMLDivElement>();
   const { setNodeRef: setDropRef } = useDroppable({
     id: columnDropId(place),
+    // A Past day stays a drop target, so a drop over it finds it (and not the
+    // nearest other column) and the Board model rejects it.
     data: { type: "column", place } satisfies DragData,
   });
 
@@ -55,29 +60,33 @@ export function TaskLines({ place, contents: { unfinished, done }, onAdd, taskAc
       <SortableContext items={[...unfinished, ...done].map((task) => task.id)} strategy={verticalListSortingStrategy}>
         <ol className="lines__tasks">
           {unfinished.map((task) => (
-            <TaskLine key={task.id} task={task} actions={taskActions} />
+            <TaskLine key={task.id} task={task} actions={taskActions} readOnly={readOnly} />
           ))}
-          {adding && (
+          {adding && !readOnly && (
             <li className="line" role="presentation">
               <NewTaskInput onAdd={onAdd} onClose={() => setAdding(false)} />
             </li>
           )}
           {done.map((task) => (
-            <TaskLine key={task.id} task={task} actions={taskActions} />
+            <TaskLine key={task.id} task={task} actions={taskActions} readOnly={readOnly} />
           ))}
         </ol>
       </SortableContext>
-      {Array.from({ length: emptyLines }, (_, i) => (
-        <button
-          key={i}
-          type="button"
-          className="line line--empty"
-          aria-label="Add a task"
-          // Every empty Line opens the same input, so only the first is in the tab order.
-          tabIndex={i === 0 ? 0 : -1}
-          onClick={() => setAdding(true)}
-        />
-      ))}
+      {Array.from({ length: emptyLines }, (_, i) =>
+        readOnly ? (
+          <div key={i} className="line line--empty line--read-only" aria-hidden="true" />
+        ) : (
+          <button
+            key={i}
+            type="button"
+            className="line line--empty"
+            aria-label="Add a task"
+            // Every empty Line opens the same input, so only the first is in the tab order.
+            tabIndex={i === 0 ? 0 : -1}
+            onClick={() => setAdding(true)}
+          />
+        ),
+      )}
     </div>
   );
 }
@@ -89,16 +98,17 @@ export function TaskLines({ place, contents: { unfinished, done }, onAdd, taskAc
  * Task isn't Done; Tags show as chips that filter the page. When a Tag filter
  * is on, Tasks without that Tag are dimmed. The whole line can be dragged
  * with a pointer. For the keyboard there is an invisible handle, first in the
- * tab order, that outlines the line while it has focus.
+ * tab order, that outlines the line while it has focus. A read-only Task has
+ * neither handle nor checkbox and can't be dragged; its text opens the editor read-only.
  */
-function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
+function TaskLine({ task, actions, readOnly }: { task: Task; actions: TaskLineActions; readOnly: boolean }) {
   const overdue = isOverdue(task, actions.today);
   const dimmed = !matchesTagFilter(task, actions.activeTag);
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: "task" } satisfies DragData,
     // Nothing lands on a Done Task: a drop there goes after the column's unfinished Tasks.
-    disabled: { droppable: task.done },
+    disabled: { draggable: readOnly, droppable: task.done || readOnly },
   });
   return (
     <li
@@ -116,18 +126,20 @@ function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
       {...listeners}
     >
       {/* Empty and invisible: only the keyboard uses it, so it isn't part of the line's text. */}
-      <button
-        ref={setActivatorNodeRef}
-        type="button"
-        className="task-line__handle"
-        {...attributes}
-        aria-label={`Move ${task.title}`}
-        title="Drag to move"
-      />
+      {!readOnly && (
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          className="task-line__handle"
+          {...attributes}
+          aria-label={`Move ${task.title}`}
+          title="Drag to move"
+        />
+      )}
       <button
         type="button"
         className="task-line__title"
-        aria-label={`Edit ${task.title}`}
+        aria-label={`${readOnly ? "View" : "Edit"} ${task.title}`}
         onClick={() => actions.onEdit(task.id)}
       >
         {task.title}
@@ -152,13 +164,15 @@ function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
           {tag}
         </button>
       ))}
-      <input
-        type="checkbox"
-        className="task-line__checkbox"
-        aria-label={`Done: ${task.title}`}
-        checked={task.done}
-        onChange={(event) => actions.onSetDone(task.id, event.target.checked)}
-      />
+      {!readOnly && (
+        <input
+          type="checkbox"
+          className="task-line__checkbox"
+          aria-label={`Done: ${task.title}`}
+          checked={task.done}
+          onChange={(event) => actions.onSetDone(task.id, event.target.checked)}
+        />
+      )}
     </li>
   );
 }

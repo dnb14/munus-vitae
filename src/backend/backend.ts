@@ -107,6 +107,13 @@ export type Backend = {
    * `categoryId` set) at a new ordering key. Only that Task changes.
    */
   moveTask(id: string, to: Pick<Task, "day" | "categoryId">, position: string): Promise<void>;
+  /**
+   * Rollover: moves every unfinished Task on a day before `day` into `day`,
+   * after its unfinished Tasks, keeping their relative order (the Board
+   * model's `rolloverPlan`). Done Tasks stay. Idempotent, so devices doing
+   * it at the same moment do no harm.
+   */
+  rollOverTo(day: string): Promise<void>;
   /** Deletes the Done Tasks in a Category. Its unfinished Tasks stay. */
   clearDoneTasks(categoryId: string): Promise<void>;
 

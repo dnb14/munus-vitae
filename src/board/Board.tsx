@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { User } from "../backend/backend";
 import { BoardDragAndDrop } from "./BoardDragAndDrop";
-import { dayRowDates, LINE_HEIGHT, type Place } from "./boardModel";
+import { dayRowDates, isPast, isReadOnly, LINE_HEIGHT, type Place } from "./boardModel";
 import { CategoryRow } from "./CategoryRow";
-import { addDays, today, type CalendarDate } from "./dates";
+import { addDays, type CalendarDate } from "./dates";
 import { DayRow } from "./DayRow";
 import { TaskEditor } from "./TaskEditor";
 import type { TaskLineActions } from "./TaskLines";
@@ -14,16 +14,26 @@ import { useCategories } from "./useCategories";
 import { useSaveFailures } from "./useSaveFailures";
 import { useSettings } from "./useSettings";
 import { useTasks } from "./useTasks";
+import { useToday } from "./useToday";
 
 /** The signed-in page: the top bar, the Day row (60%) and the Category row (40%). */
 export function Board({ user }: { user: User }) {
   const { failures, showingMessage, dismissMessage } = useSaveFailures();
   const { settings, updateSettings } = useSettings(failures);
-  // Today is read once per page load; ticket 10 adds the clock that notices midnight.
-  const [todayDate] = useState<CalendarDate>(today);
+  const todayDate = useToday();
   const [dayRowStart, setDayRowStart] = useState<CalendarDate>(todayDate);
+  // A Day row that starts at Today moves on with it when the date changes.
+  const previousToday = useRef(todayDate);
+  useEffect(() => {
+    const previous = previousToday.current;
+    previousToday.current = todayDate;
+    setDayRowStart((start) => (start === previous ? todayDate : start));
+  }, [todayDate]);
   const theme = useEffectiveTheme(settings?.theme ?? null);
-  const { tasks, createTask, setDone, updateTask, deleteTask, moveTask, clearDone, forgetCategoryTasks } = useTasks(failures);
+  const { tasks, createTask, setDone, updateTask, deleteTask, moveTask, clearDone, forgetCategoryTasks } = useTasks(
+    failures,
+    todayDate,
+  );
   const categoryActions = useCategories(failures);
   const { categories } = categoryActions;
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -38,9 +48,13 @@ export function Board({ user }: { user: User }) {
     onPickTag: setActiveTag,
   };
 
-  // Every column showing, in reading order: where keyboard dragging walks.
+  // Every column showing that takes drops, in reading order: where keyboard dragging walks.
   const places: Place[] = [
-    ...(settings ? dayRowDates(dayRowStart, settings.dayCount).map((day) => ({ day })) : []),
+    ...(settings
+      ? dayRowDates(dayRowStart, settings.dayCount)
+          .filter((day) => !isPast(day, todayDate))
+          .map((day) => ({ day }))
+      : []),
     ...(categories ?? []).map((category) => ({ categoryId: category.id })),
   ];
 
@@ -100,6 +114,7 @@ export function Board({ user }: { user: User }) {
         <TaskEditor
           key={editingTask.id}
           task={editingTask}
+          readOnly={isReadOnly(editingTask, todayDate)}
           onChange={(changes) => updateTask(editingTask.id, changes)}
           onDelete={() => {
             setEditingTaskId(null);

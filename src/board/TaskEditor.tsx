@@ -5,6 +5,8 @@ import { withTag } from "./boardModel";
 
 type Props = {
   task: Task;
+  /** A Task in a Past day: its details show, but nothing can change and there's no Delete. */
+  readOnly?: boolean;
   /** Saves changed details. Unchanged details and an empty title are ignored by the caller. */
   onChange(changes: Partial<TaskDetails>): void;
   onDelete(): void;
@@ -17,7 +19,9 @@ type Props = {
  * Tags straight away, the title and Notes when their field is left or the
  * editor closes. Escape, Close or a click outside closes it.
  */
-export function TaskEditor({ task, onChange, onDelete, onClose }: Props) {
+export function TaskEditor({ task, readOnly: readOnlyNow = false, onChange, onDelete, onClose }: Props) {
+  // Fixed when the editor opens: a Task that becomes a Past day's while open (at midnight) still saves its edits.
+  const [readOnly] = useState(readOnlyNow);
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes ?? "");
   const [newTag, setNewTag] = useState("");
@@ -37,9 +41,11 @@ export function TaskEditor({ task, onChange, onDelete, onClose }: Props) {
   }
 
   function close() {
-    saveTitle();
-    saveNotes();
-    addTag();
+    if (!readOnly) {
+      saveTitle();
+      saveNotes();
+      addTag();
+    }
     onClose();
   }
 
@@ -61,7 +67,7 @@ export function TaskEditor({ task, onChange, onDelete, onClose }: Props) {
         className="dialog task-editor"
         role="dialog"
         aria-modal="true"
-        aria-label="Edit task"
+        aria-label={readOnly ? "Task details" : "Edit task"}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
@@ -75,10 +81,11 @@ export function TaskEditor({ task, onChange, onDelete, onClose }: Props) {
             className="task-editor__input"
             value={title}
             autoFocus
+            readOnly={readOnly}
             onChange={(event) => setTitle(event.target.value)}
-            onBlur={saveTitle}
+            onBlur={() => !readOnly && saveTitle()}
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
+              if (event.key === "Enter" && !readOnly) {
                 event.preventDefault();
                 saveTitle();
               }
@@ -95,10 +102,11 @@ export function TaskEditor({ task, onChange, onDelete, onClose }: Props) {
               id={`deadline-${task.id}`}
               className="task-editor__input"
               type="date"
+              disabled={readOnly}
               value={task.deadline ?? ""}
               onChange={(event) => onChange({ deadline: event.target.value || null })}
             />
-            {task.deadline && (
+            {task.deadline && !readOnly && (
               <button type="button" className="button button--quiet" onClick={() => onChange({ deadline: null })}>
                 Clear deadline
               </button>
@@ -112,8 +120,9 @@ export function TaskEditor({ task, onChange, onDelete, onClose }: Props) {
             className="task-editor__input task-editor__notes"
             rows={4}
             value={notes}
+            readOnly={readOnly}
             onChange={(event) => setNotes(event.target.value)}
-            onBlur={saveNotes}
+            onBlur={() => !readOnly && saveNotes()}
           />
         </label>
 
@@ -125,37 +134,43 @@ export function TaskEditor({ task, onChange, onDelete, onClose }: Props) {
             {task.tags.map((tag) => (
               <li key={tag} className="tag-chip tag-chip--editable">
                 {tag}
-                <button
-                  type="button"
-                  className="tag-chip__remove"
-                  aria-label={`Remove tag ${tag}`}
-                  onClick={() => onChange({ tags: task.tags.filter((t) => t !== tag) })}
-                >
-                  ✕
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    className="tag-chip__remove"
+                    aria-label={`Remove tag ${tag}`}
+                    onClick={() => onChange({ tags: task.tags.filter((t) => t !== tag) })}
+                  >
+                    ✕
+                  </button>
+                )}
               </li>
             ))}
           </ul>
-          <input
-            className="task-editor__input"
-            aria-label="Add tag"
-            placeholder="Add a tag and press Enter"
-            value={newTag}
-            onChange={(event) => setNewTag(event.target.value)}
-            onBlur={addTag}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === ",") {
-                event.preventDefault();
-                addTag();
-              }
-            }}
-          />
+          {!readOnly && (
+            <input
+              className="task-editor__input"
+              aria-label="Add tag"
+              placeholder="Add a tag and press Enter"
+              value={newTag}
+              onChange={(event) => setNewTag(event.target.value)}
+              onBlur={addTag}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === ",") {
+                  event.preventDefault();
+                  addTag();
+                }
+              }}
+            />
+          )}
         </div>
 
         <div className="dialog__actions">
-          <button type="button" className="button button--quiet task-editor__delete" onClick={onDelete}>
-            Delete
-          </button>
+          {!readOnly && (
+            <button type="button" className="button button--quiet task-editor__delete" onClick={onDelete}>
+              Delete
+            </button>
+          )}
           <span className="top-bar__spacer" />
           <button type="button" className="button button--accent dialog__confirm" onClick={close}>
             Close

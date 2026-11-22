@@ -38,6 +38,7 @@ export function DayRow({ start, count, today, tasks, onAddTask, taskActions }: P
               contents={columnContents(tasks, place)}
               onAdd={(title) => onAddTask(date, title)}
               taskActions={taskActions}
+              readOnly={past}
             />
           </div>
         );

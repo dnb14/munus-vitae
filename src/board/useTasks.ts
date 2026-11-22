@@ -2,14 +2,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Task, TaskDetails } from "../backend/backend";
 import { useBackend } from "../backend/BackendContext";
 import type { SaveFailures } from "./useSaveFailures";
-import { doneAtFor, whereDropLands, newTaskPosition, placeFields, placeOf, type DropTarget, type Place } from "./boardModel";
+import {
+  doneAtFor,
+  newTaskPosition,
+  placeFields,
+  placeOf,
+  rolloverPlan,
+  whereDropLands,
+  type DropTarget,
+  type Place,
+} from "./boardModel";
+import type { CalendarDate } from "./dates";
 
 /**
  * Loads the user's Tasks and saves changes. Changes show
  * immediately; when the Backend rejects one, `failures` counts it and this
- * reloads what is really saved.
+ * reloads what is really saved. Once loaded, and whenever Today changes,
+ * unfinished Tasks on Past days Roll over into Today.
  */
-export function useTasks({ count: failureCount, watch }: SaveFailures) {
+export function useTasks({ count: failureCount, watch }: SaveFailures, today: CalendarDate) {
   const backend = useBackend();
   const [tasks, setTasks] = useState<Task[] | null>(null);
   // The latest Tasks, so several Tasks added before a re-render each get the next position.
@@ -48,6 +59,17 @@ export function useTasks({ count: failureCount, watch }: SaveFailures) {
       }),
     [backend, replaceTasks],
   );
+
+  const loaded = tasks !== null;
+  useEffect(() => {
+    const current = latest.current;
+    if (!loaded || !current) return;
+    const plan = rolloverPlan(current, today);
+    if (plan.length === 0) return;
+    const moved = new Map(plan.map(({ id, position }) => [id, position]));
+    replaceTasks(current.map((t) => (moved.has(t.id) ? { ...t, day: today, position: moved.get(t.id)! } : t)));
+    watch(backend.rollOverTo(today));
+  }, [backend, watch, replaceTasks, loaded, today]);
 
   const createTask = useCallback(
     (place: Place, title: string) => {
@@ -119,13 +141,13 @@ export function useTasks({ count: failureCount, watch }: SaveFailures) {
     (taskId: string, target: DropTarget) => {
       const current = latest.current;
       if (!current) return;
-      const landed = whereDropLands(current, taskId, target);
+      const landed = whereDropLands(current, taskId, target, today);
       if (!landed) return;
       const fields = placeFields(landed.place);
       replaceTasks(current.map((t) => (t.id === taskId ? { ...t, ...fields, position: landed.position } : t)));
       watch(backend.moveTask(taskId, fields, landed.position));
     },
-    [backend, watch, replaceTasks],
+    [backend, watch, replaceTasks, today],
   );
 
   /** Removes a Category's Done Tasks. */

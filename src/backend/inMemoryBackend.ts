@@ -9,6 +9,7 @@ import {
   type Task,
   type User,
 } from "./backend";
+import { rolloverPlan } from "../board/boardModel";
 
 type Options = {
   /** Start with this user already signed in. */
@@ -218,6 +219,12 @@ export function createInMemoryBackend(options: Options = {}): InMemoryBackend {
       }
       if (categoryId !== null) requireCategory(categoryId);
       replaceTask({ ...requireTask(id), day, categoryId, position });
+    },
+    async rollOverTo(day) {
+      beginSave();
+      for (const { id, position } of rolloverPlan(tasks, day)) {
+        replaceTask({ ...requireTask(id), day, position });
+      }
     },
     async clearDoneTasks(categoryId) {
       beginSave();

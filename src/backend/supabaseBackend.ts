@@ -10,6 +10,7 @@ import {
   type Theme,
   type User,
 } from "./backend";
+import { rolloverPlan } from "../board/boardModel";
 
 /**
  * The real backend. Not covered by automated tests (see the spec's Testing
@@ -152,6 +153,30 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
     async moveTask(id, { day, categoryId }, position) {
       // The schema's check constraint rejects a Task with both or neither of day and category.
       await updateTask(id, { day, category_id: categoryId, position });
+    },
+    async rollOverTo(day) {
+      // The plan needs only the unfinished Tasks on days up to `day`.
+      const { data, error } = await supabase
+        .from("tasks")
+        .select(TASK_COLUMNS)
+        .eq("done", false)
+        .lte("day", day);
+      if (error) throw error;
+      const plan = rolloverPlan((data as TaskRow[]).map(fromTaskRow), day);
+      // Each update applies only while the Task is still unfinished on a Past
+      // day, so running this again, or on two devices at once, changes nothing more.
+      const results = await Promise.all(
+        plan.map(({ id, position }) =>
+          supabase
+            .from("tasks")
+            .update({ day, position, updated_at: new Date().toISOString() })
+            .eq("id", id)
+            .eq("done", false)
+            .lt("day", day),
+        ),
+      );
+      const failed = results.find((result) => result.error);
+      if (failed) throw failed.error;
     },
     async clearDoneTasks(categoryId) {
       const { error } = await supabase.from("tasks").delete().eq("category_id", categoryId).eq("done", true);

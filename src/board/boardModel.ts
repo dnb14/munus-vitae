@@ -1,4 +1,4 @@
-import { generateKeyBetween } from "fractional-indexing";
+import { generateKeyBetween, generateNKeysBetween } from "fractional-indexing";
 import { byPosition, type Task } from "../backend/backend";
 import { addDays, type CalendarDate } from "./dates";
 
@@ -35,6 +35,30 @@ export function placeFields(place: Place): Pick<Task, "day" | "categoryId"> {
 /** Whether a date is a Past day: before Today. */
 export function isPast(date: CalendarDate, today: CalendarDate): boolean {
   return date < today;
+}
+
+/** Whether a Task is history that can't change: it is in a Past day. Tasks in Categories never are. */
+export function isReadOnly(task: Task, today: CalendarDate): boolean {
+  return task.day !== null && isPast(task.day, today);
+}
+
+/** One Task's move in a Rollover: into Today at a new ordering key. */
+export type RolloverMove = { id: string; position: string };
+
+/**
+ * The Rollover plan for a given Today: every unfinished Task on an earlier day
+ * moves into Today, after Today's unfinished Tasks, keeping their relative
+ * order (by day, then by position). Done Tasks stay put. Empty when there's
+ * nothing to roll over.
+ */
+export function rolloverPlan(tasks: Task[], today: CalendarDate): RolloverMove[] {
+  const moving = tasks
+    .filter((task) => !task.done && task.day !== null && isPast(task.day, today))
+    .sort((a, b) => (a.day! < b.day! ? -1 : a.day! > b.day! ? 1 : byPosition(a, b)));
+  if (moving.length === 0) return [];
+  const { unfinished } = columnContents(tasks, { day: today });
+  const positions = generateNKeysBetween(unfinished[unfinished.length - 1]?.position ?? null, null, moving.length);
+  return moving.map((task, i) => ({ id: task.id, position: positions[i] }));
 }
 
 /**
@@ -116,17 +140,20 @@ export type DropTarget = { taskId: string } | { place: Place };
  * own column takes that Task's place in the order; dropped on one in another column it goes
  * just before it; dropped on a column, or on a Done Task, it goes after the
  * column's unfinished Tasks. A Done Task always lands among the Done Tasks,
- * ordered by when it was ticked, so only its place can change.
+ * ordered by when it was ticked, so only its place can change. Past days
+ * reject drops, and their Tasks can't be dragged out.
  */
 export function whereDropLands(
   tasks: Task[],
   taskId: string,
   target: DropTarget,
+  today: CalendarDate,
 ): { place: Place; position: string } | null {
   const task = tasks.find((t) => t.id === taskId);
   const targetTask = "taskId" in target ? tasks.find((t) => t.id === target.taskId) : undefined;
   if (!task || ("taskId" in target && !targetTask)) return null;
   const place = targetTask ? placeOf(targetTask) : (target as { place: Place }).place;
+  if (isReadOnly(task, today) || ("day" in place && isPast(place.day, today))) return null;
   const samePlace = isInPlace(task, place);
   const { unfinished } = columnContents(tasks, place);
   const others = unfinished.filter((t) => t.id !== taskId);

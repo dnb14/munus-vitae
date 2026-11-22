@@ -4,12 +4,12 @@
 
 **Blocked by:** 06: Done; 07: Task editor, Deadlines and Tags; 08: Moving Tasks.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A **Today clock** gives the local date and notices when it changes, by checking regularly and when the window regains focus
-- [ ] The Board model produces the Rollover plan for a given Today; the Backend has one idempotent "roll over to date D" command, in both backends
-- [ ] Rollover runs after load and whenever Today changes
-- [ ] Rolled-over Tasks keep their relative order and go after Today's existing unfinished Tasks; Done Tasks don't move
-- [ ] Past days show no empty Lines to click, no checkboxes, and reject drops; their Tasks can't be dragged out
-- [ ] The editor opens read-only for Tasks in a Past day
-- [ ] App-level tests with a faked clock cover: crossing midnight with the app open, loading after 3 missed days, the ordering rule, Done Tasks staying put, and each read-only rule
+- [x] A **Today clock** gives the local date and notices when it changes, by checking regularly and when the window regains focus
+- [x] The Board model produces the Rollover plan for a given Today; the Backend has one idempotent "roll over to date D" command, in both backends
+- [x] Rollover runs after load and whenever Today changes
+- [x] Rolled-over Tasks keep their relative order and go after Today's existing unfinished Tasks; Done Tasks don't move
+- [x] Past days show no empty Lines to click, no checkboxes, and reject drops; their Tasks can't be dragged out
+- [x] The editor opens read-only for Tasks in a Past day
+- [x] App-level tests with a faked clock cover: crossing midnight with the app open, loading after 3 missed days, the ordering rule, Done Tasks staying put, and each read-only rule
