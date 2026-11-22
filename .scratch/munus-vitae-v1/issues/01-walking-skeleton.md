@@ -4,12 +4,12 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The app builds and runs locally with one dev command; tests run with one test command
-- [ ] A Backend interface exists for sign-in session state (current user, sign in, sign out); the in-memory backend implements it, and the app only reaches data through this interface
-- [ ] Signed out: a sign-in screen with a "Sign in with Google" button
-- [ ] Signed in: a really slim top bar with avatar and Sign out, a Day row region (60% of the height below the bar) and a Category row region (40%)
-- [ ] Sign out returns to the sign-in screen
-- [ ] An app-level test renders the whole app against the in-memory backend, signs in, checks the page, signs out, and checks the sign-in screen, finding elements by role, label and text only
-- [ ] The accent colour #FD8A8A is defined once as a theme value (light and dark) for later tickets to use
+- [x] The app builds and runs locally with one dev command; tests run with one test command
+- [x] A Backend interface exists for sign-in session state (current user, sign in, sign out); the in-memory backend implements it, and the app only reaches data through this interface
+- [x] Signed out: a sign-in screen with a "Sign in with Google" button
+- [x] Signed in: a really slim top bar with avatar and Sign out, a Day row region (60% of the height below the bar) and a Category row region (40%)
+- [x] Sign out returns to the sign-in screen
+- [x] An app-level test renders the whole app against the in-memory backend, signs in, checks the page, signs out, and checks the sign-in screen, finding elements by role, label and text only
+- [x] The accent colour #FD8A8A is defined once as a theme value (light and dark) for later tickets to use
