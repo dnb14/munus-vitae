@@ -367,6 +367,7 @@ body {
 }
 
 .task-line {
+  position: relative;
   gap: 6px;
   transition: opacity 0.15s;
 }
@@ -488,41 +489,26 @@ body {
 .task-line:hover .task-line__checkbox,
 .task-line:focus-within .task-line__checkbox {
   width: 14px;
-  margin-right: 8px;
+  margin-left: 2px;
   opacity: 1;
 }
 
-/* The keyboard drag handle: hidden like the checkbox until the line is hovered or focused. */
+/* The keyboard drag handle: takes no space and shows nothing; while it has
+   keyboard focus, the whole line is outlined instead. */
 .task-line__handle {
-  flex: none;
-  width: 0;
-  height: 14px;
-  margin: 0 0 0 -6px;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
   padding: 0;
   overflow: hidden;
   opacity: 0;
-  color: var(--text-muted);
-  background: none;
   border: none;
-  cursor: grab;
-  touch-action: none;
 }
 
-.task-line__handle::before {
-  content: "⠿";
-  font-size: 12px;
-  line-height: 14px;
-}
-
-.task-line:hover .task-line__handle,
-.task-line:focus-within .task-line__handle {
-  width: 10px;
-  opacity: 1;
-}
-
-.task-line__handle:focus-visible {
+.task-line:has(.task-line__handle:focus-visible) {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: -2px;
 }
 
 /* The Task's own line while it is dragged; the overlay below follows the pointer. */

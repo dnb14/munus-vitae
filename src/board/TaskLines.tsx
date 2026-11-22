@@ -83,12 +83,13 @@ export function TaskLines({ place, contents: { unfinished, done }, onAdd, taskAc
 }
 
 /**
- * One Task on its Line. The checkbox shows on hover or keyboard focus; a Done
+ * One Task on its Line. The checkbox, at the right end, shows on hover or keyboard focus; a Done
  * Task is crossed out and greyed all the time. Clicking the text opens the
  * editor. A Deadline shows as a date badge, red once it has passed while the
  * Task isn't Done; Tags show as chips that filter the page. When a Tag filter
  * is on, Tasks without that Tag are dimmed. The whole line can be dragged
- * with a pointer; the handle is what the keyboard picks up.
+ * with a pointer. For the keyboard there is an invisible handle, first in the
+ * tab order, that outlines the line while it has focus.
  */
 function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
   const overdue = isOverdue(task, actions.today);
@@ -114,7 +115,7 @@ function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
         .join(" ")}
       {...listeners}
     >
-      {/* Empty: the grip is drawn in CSS, so it isn't part of the line's text. */}
+      {/* Empty and invisible: only the keyboard uses it, so it isn't part of the line's text. */}
       <button
         ref={setActivatorNodeRef}
         type="button"
@@ -122,13 +123,6 @@ function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
         {...attributes}
         aria-label={`Move ${task.title}`}
         title="Drag to move"
-      />
-      <input
-        type="checkbox"
-        className="task-line__checkbox"
-        aria-label={`Done: ${task.title}`}
-        checked={task.done}
-        onChange={(event) => actions.onSetDone(task.id, event.target.checked)}
       />
       <button
         type="button"
@@ -158,6 +152,13 @@ function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
           {tag}
         </button>
       ))}
+      <input
+        type="checkbox"
+        className="task-line__checkbox"
+        aria-label={`Done: ${task.title}`}
+        checked={task.done}
+        onChange={(event) => actions.onSetDone(task.id, event.target.checked)}
+      />
     </li>
   );
 }
