@@ -106,6 +106,10 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       const { error } = await supabase.from("tasks").delete().eq("id", id);
       if (error) throw error;
     },
+    async moveTask(id, { day, categoryId }, position) {
+      // The schema's check constraint rejects a Task with both or neither of day and category.
+      await updateTask(id, { day, category_id: categoryId, position });
+    },
     async clearDoneTasks(categoryId) {
       const { error } = await supabase.from("tasks").delete().eq("category_id", categoryId).eq("done", true);
       if (error) throw error;

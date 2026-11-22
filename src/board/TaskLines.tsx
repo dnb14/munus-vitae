@@ -1,6 +1,10 @@
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useRef, useState } from "react";
 import type { Task } from "../backend/backend";
-import { emptyLineCount, isOverdue, matchesTagFilter } from "./boardModel";
+import { columnDropId, type DragData } from "./BoardDragAndDrop";
+import { emptyLineCount, isOverdue, matchesTagFilter, type Place } from "./boardModel";
 import { deadlineLabel, type CalendarDate } from "./dates";
 
 /** What every Task line needs from the Board, the same in every column. */
@@ -17,6 +21,7 @@ export type TaskLineActions = {
 };
 
 type Props = {
+  place: Place;
   /** The column's contents from the Board model. A new Task snaps in after the unfinished ones. */
   contents: { unfinished: Task[]; done: Task[] };
   onAdd(title: string): void;
@@ -27,28 +32,41 @@ type Props = {
  * A column's body, ruled into Lines like notebook paper. Tasks fill Lines from
  * the top; clicking any empty Line opens an input on the Line a new Task
  * snaps to. The column scrolls when full, always keeping one empty Line.
+ * Tasks are dragged within and between columns; the whole body takes drops.
  */
-export function TaskLines({ contents: { unfinished, done }, onAdd, taskActions }: Props) {
+export function TaskLines({ place, contents: { unfinished, done }, onAdd, taskActions }: Props) {
   const [adding, setAdding] = useState(false);
   const [containerRef, height] = useHeight<HTMLDivElement>();
+  const { setNodeRef: setDropRef } = useDroppable({
+    id: columnDropId(place),
+    data: { type: "column", place } satisfies DragData,
+  });
 
   const emptyLines = emptyLineCount(height, unfinished.length + done.length, adding);
 
   return (
-    <div className="lines" ref={containerRef}>
-      <ol className="lines__tasks">
-        {unfinished.map((task) => (
-          <TaskLine key={task.id} task={task} actions={taskActions} />
-        ))}
-        {adding && (
-          <li className="line" role="presentation">
-            <NewTaskInput onAdd={onAdd} onClose={() => setAdding(false)} />
-          </li>
-        )}
-        {done.map((task) => (
-          <TaskLine key={task.id} task={task} actions={taskActions} />
-        ))}
-      </ol>
+    <div
+      className="lines"
+      ref={(element) => {
+        containerRef(element);
+        setDropRef(element);
+      }}
+    >
+      <SortableContext items={[...unfinished, ...done].map((task) => task.id)} strategy={verticalListSortingStrategy}>
+        <ol className="lines__tasks">
+          {unfinished.map((task) => (
+            <TaskLine key={task.id} task={task} actions={taskActions} />
+          ))}
+          {adding && (
+            <li className="line" role="presentation">
+              <NewTaskInput onAdd={onAdd} onClose={() => setAdding(false)} />
+            </li>
+          )}
+          {done.map((task) => (
+            <TaskLine key={task.id} task={task} actions={taskActions} />
+          ))}
+        </ol>
+      </SortableContext>
       {Array.from({ length: emptyLines }, (_, i) => (
         <button
           key={i}
@@ -69,17 +87,42 @@ export function TaskLines({ contents: { unfinished, done }, onAdd, taskActions }
  * Task is crossed out and greyed all the time. Clicking the text opens the
  * editor. A Deadline shows as a date badge, red once it has passed while the
  * Task isn't Done; Tags show as chips that filter the page. When a Tag filter
- * is on, Tasks without that Tag are dimmed.
+ * is on, Tasks without that Tag are dimmed. The whole line can be dragged
+ * with a pointer; the handle is what the keyboard picks up.
  */
 function TaskLine({ task, actions }: { task: Task; actions: TaskLineActions }) {
   const overdue = isOverdue(task, actions.today);
   const dimmed = !matchesTagFilter(task, actions.activeTag);
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: { type: "task" } satisfies DragData,
+    // Nothing lands on a Done Task: a drop there goes after the column's unfinished Tasks.
+    disabled: { droppable: task.done },
+  });
   return (
     <li
-      className={["line", "task-line", task.done && "task-line--done", dimmed && "task-line--dimmed"]
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={[
+        "line",
+        "task-line",
+        task.done && "task-line--done",
+        dimmed && "task-line--dimmed",
+        isDragging && "task-line--dragging",
+      ]
         .filter(Boolean)
         .join(" ")}
+      {...listeners}
     >
+      {/* Empty: the grip is drawn in CSS, so it isn't part of the line's text. */}
+      <button
+        ref={setActivatorNodeRef}
+        type="button"
+        className="task-line__handle"
+        {...attributes}
+        aria-label={`Move ${task.title}`}
+        title="Drag to move"
+      />
       <input
         type="checkbox"
         className="task-line__checkbox"

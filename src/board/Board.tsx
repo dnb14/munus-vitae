@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { User } from "../backend/backend";
-import { LINE_HEIGHT } from "./boardModel";
+import { BoardDragAndDrop } from "./BoardDragAndDrop";
+import { dayRowDates, LINE_HEIGHT, type Place } from "./boardModel";
 import { CategoryRow } from "./CategoryRow";
 import { addDays, today, type CalendarDate } from "./dates";
 import { DayRow } from "./DayRow";
@@ -9,6 +10,7 @@ import { TaskEditor } from "./TaskEditor";
 import type { TaskLineActions } from "./TaskLines";
 import { useEffectiveTheme } from "./theme";
 import { TopBar } from "./TopBar";
+import { useCategories } from "./useCategories";
 import { useSettings } from "./useSettings";
 import { useTasks } from "./useTasks";
 
@@ -19,7 +21,9 @@ export function Board({ user }: { user: User }) {
   const [todayDate] = useState<CalendarDate>(today);
   const [dayRowStart, setDayRowStart] = useState<CalendarDate>(todayDate);
   const theme = useEffectiveTheme(settings?.theme ?? null);
-  const { tasks, createTask, setDone, updateTask, deleteTask, clearDone, forgetCategoryTasks } = useTasks();
+  const { tasks, createTask, setDone, updateTask, deleteTask, moveTask, clearDone, forgetCategoryTasks } = useTasks();
+  const categoryActions = useCategories();
+  const { categories } = categoryActions;
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const editingTask = tasks?.find((task) => task.id === editingTaskId) ?? null;
@@ -31,6 +35,12 @@ export function Board({ user }: { user: User }) {
     onEdit: setEditingTaskId,
     onPickTag: setActiveTag,
   };
+
+  // Every column showing, in reading order: where keyboard dragging walks.
+  const places: Place[] = [
+    ...(settings ? dayRowDates(dayRowStart, settings.dayCount).map((day) => ({ day })) : []),
+    ...(categories ?? []).map((category) => ({ categoryId: category.id })),
+  ];
 
   return (
     <div className="board" style={{ "--line-height": `${LINE_HEIGHT}px` } as CSSProperties}>
@@ -49,29 +59,41 @@ export function Board({ user }: { user: User }) {
         activeTag={activeTag}
         onClearTag={() => setActiveTag(null)}
       />
-      <section className="day-row" aria-label="Day row">
-        {settings && tasks && (
-          <DayRow
-            start={dayRowStart}
-            count={settings.dayCount}
-            today={todayDate}
-            tasks={tasks}
-            onAddTask={(day, title) => createTask({ day }, title)}
-            taskActions={taskActions}
-          />
-        )}
-      </section>
-      <section className="category-row" aria-label="Category row">
-        {tasks && (
-          <CategoryRow
-            tasks={tasks}
-            onAddTask={(categoryId, title) => createTask({ categoryId }, title)}
-            taskActions={taskActions}
-            onClearDone={clearDone}
-            onCategoryDeleted={forgetCategoryTasks}
-          />
-        )}
-      </section>
+      <BoardDragAndDrop
+        tasks={tasks ?? []}
+        categories={categories ?? []}
+        places={places}
+        onMoveTask={moveTask}
+        onMoveCategory={categoryActions.moveCategory}
+      >
+        <section className="day-row" aria-label="Day row">
+          {settings && tasks && (
+            <DayRow
+              start={dayRowStart}
+              count={settings.dayCount}
+              today={todayDate}
+              tasks={tasks}
+              onAddTask={(day, title) => createTask({ day }, title)}
+              taskActions={taskActions}
+            />
+          )}
+        </section>
+        <section className="category-row" aria-label="Category row">
+          {tasks && categories && (
+            <CategoryRow
+              categories={categories}
+              onCreateCategory={categoryActions.createCategory}
+              onRenameCategory={categoryActions.renameCategory}
+              onDeleteCategory={categoryActions.deleteCategory}
+              tasks={tasks}
+              onAddTask={(categoryId, title) => createTask({ categoryId }, title)}
+              taskActions={taskActions}
+              onClearDone={clearDone}
+              onCategoryDeleted={forgetCategoryTasks}
+            />
+          )}
+        </section>
+      </BoardDragAndDrop>
       {editingTask && (
         <TaskEditor
           key={editingTask.id}

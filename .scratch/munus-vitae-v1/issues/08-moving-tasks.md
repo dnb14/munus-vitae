@@ -4,11 +4,11 @@
 
 **Blocked by:** 06: Done.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The Backend interface can move a Task to a target day or Category at a given position, in both backends; only the moved Task's row changes (fractional indexing), and exactly one of day/category stays set
-- [ ] The Board model decides where a dropped Task lands, including Done Tasks always landing among the Done Tasks
-- [ ] Reordering within a column works and survives a reload
-- [ ] Moving between Day columns, Category → day, day → Category, and between Categories all work
-- [ ] Keyboard dragging (pick up, arrows, drop) performs all of the above
-- [ ] App-level tests use keyboard dragging to cover reordering, Scheduling, unscheduling, moving between Categories, and dropping a Done Task
+- [x] The Backend interface can move a Task to a target day or Category at a given position, in both backends; only the moved Task's row changes (fractional indexing), and exactly one of day/category stays set
+- [x] The Board model decides where a dropped Task lands, including Done Tasks always landing among the Done Tasks
+- [x] Reordering within a column works and survives a reload
+- [x] Moving between Day columns, Category → day, day → Category, and between Categories all work
+- [x] Keyboard dragging (pick up, arrows, drop) performs all of the above
+- [x] App-level tests use keyboard dragging to cover reordering, Scheduling, unscheduling, moving between Categories, and dropping a Done Task

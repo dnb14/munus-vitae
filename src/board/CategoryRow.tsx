@@ -1,17 +1,19 @@
-import { closestCenter, DndContext, type Announcements, type DragEndEvent } from "@dnd-kit/core";
 import { horizontalListSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useState } from "react";
 import type { Category, Task } from "../backend/backend";
+import type { DragData } from "./BoardDragAndDrop";
 import { categoryTaskCount, columnContents } from "./boardModel";
 import { CategoryMenu } from "./CategoryMenu";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { useDragSensors } from "./dragAndDrop";
 import { NameInput } from "./NameInput";
 import { TaskLines, type TaskLineActions } from "./TaskLines";
-import { useCategories } from "./useCategories";
 
 type Props = {
+  categories: Category[];
+  onCreateCategory(name: string): void;
+  onRenameCategory(id: string, name: string): void;
+  onDeleteCategory(id: string): void;
   tasks: Task[];
   onAddTask(categoryId: string, title: string): void;
   taskActions: TaskLineActions;
@@ -20,16 +22,26 @@ type Props = {
   onCategoryDeleted(categoryId: string): void;
 };
 
-/** The Category row: one column per Category, in order, then "+ Add category". */
-export function CategoryRow({ tasks, onAddTask, taskActions, onClearDone, onCategoryDeleted }: Props) {
-  const { categories, createCategory, renameCategory, deleteCategory, moveCategory } = useCategories();
-  const sensors = useDragSensors();
+/**
+ * The Category row: one column per Category, in order, then "+ Add category".
+ * Categories are dragged by their header handle, within the Board's drag context.
+ */
+export function CategoryRow({
+  categories,
+  onCreateCategory,
+  onRenameCategory,
+  onDeleteCategory,
+  tasks,
+  onAddTask,
+  taskActions,
+  onClearDone,
+  onCategoryDeleted,
+}: Props) {
   // The Category waiting for "Delete <name> and its N tasks?" to be answered.
   const [confirmingDelete, setConfirmingDelete] = useState<Category | null>(null);
-  if (!categories) return null;
 
   function deleteNow(id: string) {
-    deleteCategory(id);
+    onDeleteCategory(id);
     onCategoryDeleted(id);
   }
 
@@ -38,46 +50,23 @@ export function CategoryRow({ tasks, onAddTask, taskActions, onClearDone, onCate
     else setConfirmingDelete(category);
   }
 
-  const nameOf = (id: string | number) => categories.find((c) => c.id === id)?.name ?? "Category";
-  const announcements: Announcements = {
-    onDragStart: ({ active }) => `Picked up ${nameOf(active.id)}.`,
-    onDragOver: ({ active, over }) =>
-      over ? `${nameOf(active.id)} is over ${nameOf(over.id)}.` : `${nameOf(active.id)} is not over a Category.`,
-    onDragEnd: ({ active, over }) =>
-      over ? `Dropped ${nameOf(active.id)} at ${nameOf(over.id)}.` : `Dropped ${nameOf(active.id)}.`,
-    onDragCancel: ({ active }) => `Cancelled moving ${nameOf(active.id)}.`,
-  };
-
-  function onDragEnd({ active, over }: DragEndEvent) {
-    if (!over || active.id === over.id || !categories) return;
-    const toIndex = categories.findIndex((c) => c.id === over.id);
-    moveCategory(String(active.id), toIndex);
-  }
-
   return (
     <div className="category-row__columns">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        accessibility={{ announcements }}
-        onDragEnd={onDragEnd}
-      >
-        <SortableContext items={categories.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
-          {categories.map((category) => (
-            <CategoryColumn
-              key={category.id}
-              category={category}
-              tasks={tasks}
-              onAddTask={(title) => onAddTask(category.id, title)}
-              taskActions={taskActions}
-              onClearDone={() => onClearDone(category.id)}
-              onRename={(name) => renameCategory(category.id, name)}
-              onDelete={() => requestDelete(category)}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
-      <AddCategoryColumn onCreate={createCategory} />
+      <SortableContext items={categories.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
+        {categories.map((category) => (
+          <CategoryColumn
+            key={category.id}
+            category={category}
+            tasks={tasks}
+            onAddTask={(title) => onAddTask(category.id, title)}
+            taskActions={taskActions}
+            onClearDone={() => onClearDone(category.id)}
+            onRename={(name) => onRenameCategory(category.id, name)}
+            onDelete={() => requestDelete(category)}
+          />
+        ))}
+      </SortableContext>
+      <AddCategoryColumn onCreate={onCreateCategory} />
       {confirmingDelete && (
         <ConfirmDialog
           question={deleteQuestion(confirmingDelete.name, categoryTaskCount(tasks, confirmingDelete.id))}
@@ -111,6 +100,7 @@ function CategoryColumn({ category, tasks, onAddTask, taskActions, onClearDone, 
   const place = { categoryId: category.id };
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id,
+    data: { type: "category" } satisfies DragData,
   });
   const [renaming, setRenaming] = useState(false);
 
@@ -153,7 +143,7 @@ function CategoryColumn({ category, tasks, onAddTask, taskActions, onClearDone, 
         )}
         <CategoryMenu categoryName={category.name} onClearDone={onClearDone} onDelete={onDelete} />
       </div>
-      <TaskLines contents={columnContents(tasks, place)} onAdd={onAddTask} taskActions={taskActions} />
+      <TaskLines place={place} contents={columnContents(tasks, place)} onAdd={onAddTask} taskActions={taskActions} />
     </div>
   );
 }

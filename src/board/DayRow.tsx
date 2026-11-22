@@ -34,6 +34,7 @@ export function DayRow({ start, count, today, tasks, onAddTask, taskActions }: P
               {dayColumnLabel(date)}
             </h2>
             <TaskLines
+              place={place}
               contents={columnContents(tasks, place)}
               onAdd={(title) => onAddTask(date, title)}
               taskActions={taskActions}

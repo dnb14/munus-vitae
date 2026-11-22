@@ -168,6 +168,14 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       requireTask(id);
       tasks = tasks.filter((t) => t.id !== id);
     },
+    async moveTask(id, { day, categoryId }, position) {
+      requireUser();
+      if ((day === null) === (categoryId === null)) {
+        throw new Error("A Task must be in exactly one of a day or a Category");
+      }
+      if (categoryId !== null) requireCategory(categoryId);
+      replaceTask({ ...requireTask(id), day, categoryId, position });
+    },
     async clearDoneTasks(categoryId) {
       requireUser();
       requireCategory(categoryId);

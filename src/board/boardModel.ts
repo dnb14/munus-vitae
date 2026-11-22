@@ -106,3 +106,105 @@ export function withTag(tags: string[], tag: string): string[] {
 function byDoneAt(a: Task, b: Task): number {
   return Date.parse(a.doneAt ?? "") - Date.parse(b.doneAt ?? "") || 0;
 }
+
+/** What a dragged Task is dropped on: another Task, or a column (its empty space). */
+export type DropTarget = { taskId: string } | { place: Place };
+
+/**
+ * Where a dropped Task lands: its new place and ordering key, or null when the
+ * drop changes nothing. An unfinished Task dropped on an unfinished Task in its
+ * own column takes that Task's place in the order; dropped on one in another column it goes
+ * just before it; dropped on a column, or on a Done Task, it goes after the
+ * column's unfinished Tasks. A Done Task always lands among the Done Tasks,
+ * ordered by when it was ticked, so only its place can change.
+ */
+export function whereDropLands(
+  tasks: Task[],
+  taskId: string,
+  target: DropTarget,
+): { place: Place; position: string } | null {
+  const task = tasks.find((t) => t.id === taskId);
+  const targetTask = "taskId" in target ? tasks.find((t) => t.id === target.taskId) : undefined;
+  if (!task || ("taskId" in target && !targetTask)) return null;
+  const place = targetTask ? placeOf(targetTask) : (target as { place: Place }).place;
+  const samePlace = isInPlace(task, place);
+  const { unfinished } = columnContents(tasks, place);
+  const others = unfinished.filter((t) => t.id !== taskId);
+
+  let index = others.length;
+  if (task.done) {
+    if (samePlace) return null;
+  } else if (targetTask && !targetTask.done) {
+    index = samePlace ? unfinished.indexOf(targetTask) : others.indexOf(targetTask);
+  }
+  if (samePlace && !task.done && unfinished.indexOf(task) === index) return null;
+
+  const position = generateKeyBetween(others[index - 1]?.position ?? null, others[index]?.position ?? null);
+  return { place, position };
+}
+
+/**
+ * Where a Task picked up by keyboard would be dropped: the column (an index
+ * into the board's places, in reading order: the Day columns, then the
+ * Categories) and the index among that column's unfinished Tasks.
+ */
+export type KeyboardDrop = { placeIndex: number; index: number };
+
+/** Where a Task picked up by keyboard starts: where it is. Null if its column isn't showing. */
+export function keyboardStart(tasks: Task[], taskId: string, places: Place[]): KeyboardDrop | null {
+  const task = tasks.find((t) => t.id === taskId);
+  if (!task) return null;
+  const placeIndex = places.findIndex((place) => isInPlace(task, place));
+  if (placeIndex < 0) return null;
+  const index = task.done ? 0 : columnContents(tasks, places[placeIndex]).unfinished.indexOf(task);
+  return { placeIndex, index };
+}
+
+/**
+ * Where an arrow key moves a keyboard drop: Up and Down move one Task within
+ * the column, Left and Right move to the previous or next column, keeping as
+ * close to the same index as that column allows. A Done Task has only one
+ * index per column, since it always lands among the Done Tasks.
+ */
+export function keyboardStep(
+  tasks: Task[],
+  taskId: string,
+  places: Place[],
+  drop: KeyboardDrop,
+  key: "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight",
+): KeyboardDrop {
+  const task = tasks.find((t) => t.id === taskId);
+  if (!task || places.length === 0) return drop;
+  const placeIndex = clamp(
+    drop.placeIndex + (key === "ArrowLeft" ? -1 : key === "ArrowRight" ? 1 : 0),
+    0,
+    places.length - 1,
+  );
+  const index = clamp(
+    drop.index + (key === "ArrowUp" ? -1 : key === "ArrowDown" ? 1 : 0),
+    0,
+    lastKeyboardIndex(tasks, task, places[placeIndex]),
+  );
+  return { placeIndex, index };
+}
+
+/** What a keyboard drop is dropped on, so that `whereDropLands` puts the Task at that index. */
+export function keyboardTarget(tasks: Task[], taskId: string, place: Place, index: number): DropTarget {
+  const task = tasks.find((t) => t.id === taskId);
+  if (!task || task.done) return { place };
+  const { unfinished } = columnContents(tasks, place);
+  // In its own column a Task takes the place in the order of the Task it's on; elsewhere it goes before it.
+  const list = isInPlace(task, place) ? unfinished : unfinished.filter((t) => t.id !== taskId);
+  const at = list[index];
+  return at ? { taskId: at.id } : { place };
+}
+
+function lastKeyboardIndex(tasks: Task[], task: Task, place: Place): number {
+  if (task.done) return 0;
+  const { unfinished } = columnContents(tasks, place);
+  return isInPlace(task, place) ? unfinished.length - 1 : unfinished.length;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}

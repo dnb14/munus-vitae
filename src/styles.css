@@ -492,6 +492,52 @@ body {
   opacity: 1;
 }
 
+/* The keyboard drag handle: hidden like the checkbox until the line is hovered or focused. */
+.task-line__handle {
+  flex: none;
+  width: 0;
+  height: 14px;
+  margin: 0 0 0 -6px;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.task-line__handle::before {
+  content: "⠿";
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.task-line:hover .task-line__handle,
+.task-line:focus-within .task-line__handle {
+  width: 10px;
+  opacity: 1;
+}
+
+.task-line__handle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The Task's own line while it is dragged; the overlay below follows the pointer. */
+.task-line--dragging {
+  opacity: 0.4;
+}
+
+.task-line--overlay {
+  background: var(--surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+  cursor: grabbing;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 /* Done Tasks are crossed out and greyed, hovered or not. */
 .task-line--done .task-line__title {
   color: var(--text-muted);

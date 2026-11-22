@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Task, TaskDetails } from "../backend/backend";
 import { useBackend } from "../backend/BackendContext";
-import { doneAtFor, newTaskPosition, placeFields, placeOf, type Place } from "./boardModel";
+import { doneAtFor, whereDropLands, newTaskPosition, placeFields, placeOf, type DropTarget, type Place } from "./boardModel";
 
 /**
  * Loads the user's Tasks and saves changes. Changes show immediately;
@@ -93,6 +93,20 @@ export function useTasks() {
     [backend, replaceTasks],
   );
 
+  /** Moves a dropped Task to where the Board model says it lands. Only that Task changes. */
+  const moveTask = useCallback(
+    (taskId: string, target: DropTarget) => {
+      const current = latest.current;
+      if (!current) return;
+      const landed = whereDropLands(current, taskId, target);
+      if (!landed) return;
+      const fields = placeFields(landed.place);
+      replaceTasks(current.map((t) => (t.id === taskId ? { ...t, ...fields, position: landed.position } : t)));
+      void backend.moveTask(taskId, fields, landed.position);
+    },
+    [backend, replaceTasks],
+  );
+
   /** Removes a Category's Done Tasks. */
   const clearDone = useCallback(
     (categoryId: string) => {
@@ -113,7 +127,7 @@ export function useTasks() {
     [replaceTasks],
   );
 
-  return { tasks, createTask, setDone, updateTask, deleteTask, clearDone, forgetCategoryTasks };
+  return { tasks, createTask, setDone, updateTask, deleteTask, moveTask, clearDone, forgetCategoryTasks };
 }
 
 /** The details in `changes` that differ from the Task's, leaving out an empty title. */

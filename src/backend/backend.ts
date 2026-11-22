@@ -91,6 +91,11 @@ export type Backend = {
    */
   updateTask(id: string, changes: Partial<TaskDetails>): Promise<void>;
   deleteTask(id: string): Promise<void>;
+  /**
+   * Moves a Task to a day or a Category (exactly one of `day` and
+   * `categoryId` set) at a new ordering key. Only that Task changes.
+   */
+  moveTask(id: string, to: Pick<Task, "day" | "categoryId">, position: string): Promise<void>;
   /** Deletes the Done Tasks in a Category. Its unfinished Tasks stay. */
   clearDoneTasks(categoryId: string): Promise<void>;
 };
