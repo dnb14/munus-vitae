@@ -1,13 +1,15 @@
 import { generateKeyBetween } from "fractional-indexing";
 import { useCallback, useEffect, useState } from "react";
-import type { Category } from "../backend/backend";
+import { byPosition, type Category } from "../backend/backend";
 import { useBackend } from "../backend/BackendContext";
+import type { SaveFailures } from "./useSaveFailures";
 
 /**
  * Loads the user's Categories in order and saves changes. Changes show
- * immediately; handling a failed save comes with ticket 09.
+ * immediately; when the Backend rejects one, `failures` counts it and this
+ * reloads what is really saved.
  */
-export function useCategories() {
+export function useCategories({ count: failureCount, watch }: SaveFailures) {
   const backend = useBackend();
   const [categories, setCategories] = useState<Category[] | null>(null);
 
@@ -19,7 +21,23 @@ export function useCategories() {
     return () => {
       active = false;
     };
-  }, [backend]);
+  }, [backend, failureCount]);
+
+  // Merge saved changes from every device, this one included.
+  useEffect(
+    () =>
+      backend.subscribeToChanges((change) => {
+        if (change.kind === "categorySaved") {
+          const { category } = change;
+          setCategories(
+            (current) => current && [...current.filter((c) => c.id !== category.id), category].sort(byPosition),
+          );
+        } else if (change.kind === "categoryDeleted") {
+          setCategories((current) => current && current.filter((c) => c.id !== change.id));
+        }
+      }),
+    [backend],
+  );
 
   const createCategory = useCallback(
     (name: string) => {
@@ -31,26 +49,26 @@ export function useCategories() {
         position: generateKeyBetween(last?.position ?? null, null),
       };
       setCategories([...categories, category]);
-      void backend.createCategory(category);
+      watch(backend.createCategory(category));
     },
-    [backend, categories],
+    [backend, watch, categories],
   );
 
   const renameCategory = useCallback(
     (id: string, name: string) => {
       setCategories((current) => current && current.map((c) => (c.id === id ? { ...c, name } : c)));
-      void backend.renameCategory(id, name);
+      watch(backend.renameCategory(id, name));
     },
-    [backend],
+    [backend, watch],
   );
 
   /** Deletes a Category; the Backend deletes its Tasks with it. Confirming is the caller's job. */
   const deleteCategory = useCallback(
     (id: string) => {
       setCategories((current) => current && current.filter((c) => c.id !== id));
-      void backend.deleteCategory(id);
+      watch(backend.deleteCategory(id));
     },
-    [backend],
+    [backend, watch],
   );
 
   /** Moves a Category to `toIndex` in the order. Only the moved Category gets a new position. */
@@ -63,9 +81,9 @@ export function useCategories() {
       const position = generateKeyBetween(others[toIndex - 1]?.position ?? null, others[toIndex]?.position ?? null);
       const updated = { ...moved, position };
       setCategories([...others.slice(0, toIndex), updated, ...others.slice(toIndex)]);
-      void backend.moveCategory(id, position);
+      watch(backend.moveCategory(id, position));
     },
-    [backend, categories],
+    [backend, watch, categories],
   );
 
   return { categories, createCategory, renameCategory, deleteCategory, moveCategory };

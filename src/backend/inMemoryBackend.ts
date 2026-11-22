@@ -1,5 +1,14 @@
 import { generateNKeysBetween } from "fractional-indexing";
-import { byPosition, DEFAULT_SETTINGS, type Backend, type Category, type Settings, type Task, type User } from "./backend";
+import {
+  byPosition,
+  DEFAULT_SETTINGS,
+  type Backend,
+  type Category,
+  type DataChange,
+  type Settings,
+  type Task,
+  type User,
+} from "./backend";
 
 type Options = {
   /** Start with this user already signed in. */
@@ -21,7 +30,12 @@ type Options = {
 
 const DEFAULT_GOOGLE_USER: Omit<User, "id"> = { name: "Test User" };
 
-export function createInMemoryBackend(options: Options = {}): Backend {
+export type InMemoryBackend = Backend & {
+  /** Makes the next command that saves something fail, as when the server rejects it. */
+  rejectNextSave(): void;
+};
+
+export function createInMemoryBackend(options: Options = {}): InMemoryBackend {
   let currentUser: User | null = options.signedInAs
     ? { id: "user-1", ...options.signedInAs }
     : null;
@@ -48,6 +62,12 @@ export function createInMemoryBackend(options: Options = {}): Backend {
     position: taskPositions[i],
   }));
   const listeners = new Set<(user: User | null) => void>();
+  const changeListeners = new Set<(change: DataChange) => void>();
+
+  /** Tells every subscriber, this screen included, as Supabase Realtime does. */
+  function emit(change: DataChange) {
+    changeListeners.forEach((listener) => listener(change));
+  }
 
   function categoryIdNamed(name: string): string {
     const category = categories.find((c) => c.name === name);
@@ -60,8 +80,19 @@ export function createInMemoryBackend(options: Options = {}): Backend {
     listeners.forEach((listener) => listener(user));
   }
 
+  let rejectingNextSave = false;
+
   function requireUser() {
     if (!currentUser) throw new Error("Not signed in");
+  }
+
+  /** Every command that saves something starts here. */
+  function beginSave() {
+    requireUser();
+    if (rejectingNextSave) {
+      rejectingNextSave = false;
+      throw new Error("The save was rejected");
+    }
   }
 
   function requireCategory(id: string): Category {
@@ -78,10 +109,16 @@ export function createInMemoryBackend(options: Options = {}): Backend {
 
   function replaceTask(updated: Task) {
     tasks = tasks.map((t) => (t.id === updated.id ? updated : t));
+    emitTaskSaved(updated);
+  }
+
+  function emitTaskSaved(task: Task) {
+    emit({ kind: "taskSaved", task: { ...task, tags: [...task.tags] } });
   }
 
   function replaceCategory(updated: Category) {
     categories = categories.map((c) => (c.id === updated.id ? updated : c));
+    emit({ kind: "categorySaved", category: { ...updated } });
   }
 
   return {
@@ -104,8 +141,9 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       return { ...settings };
     },
     async updateSettings(changes) {
-      requireUser();
+      beginSave();
       settings = { ...settings, ...changes };
+      emit({ kind: "settingsSaved", settings: { ...settings } });
     },
 
     async getCategories() {
@@ -113,25 +151,28 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       return categories.map((c) => ({ ...c })).sort(byPosition);
     },
     async createCategory(category) {
-      requireUser();
+      beginSave();
       if (!category.name.trim()) throw new Error("A Category needs a name");
       if (categories.some((c) => c.id === category.id)) throw new Error(`Category ${category.id} exists`);
       categories = [...categories, { ...category }];
+      emit({ kind: "categorySaved", category: { ...category } });
     },
     async renameCategory(id, name) {
-      requireUser();
+      beginSave();
       if (!name.trim()) throw new Error("A Category needs a name");
       replaceCategory({ ...requireCategory(id), name });
     },
     async moveCategory(id, position) {
-      requireUser();
+      beginSave();
       replaceCategory({ ...requireCategory(id), position });
     },
     async deleteCategory(id) {
-      requireUser();
+      beginSave();
       requireCategory(id);
       categories = categories.filter((c) => c.id !== id);
       tasks = tasks.filter((t) => t.categoryId !== id);
+      // Like a cascading delete, its Tasks go without a change of their own.
+      emit({ kind: "categoryDeleted", id });
     },
 
     async getTasks() {
@@ -139,7 +180,7 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       return tasks.map((t) => ({ ...t, tags: [...t.tags] }));
     },
     async createTask(task) {
-      requireUser();
+      beginSave();
       if (!task.title.trim()) throw new Error("A Task needs a title");
       if ((task.day === null) === (task.categoryId === null)) {
         throw new Error("A Task must be in exactly one of a day or a Category");
@@ -147,29 +188,31 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       if (task.categoryId !== null) requireCategory(task.categoryId);
       if (tasks.some((t) => t.id === task.id)) throw new Error(`Task ${task.id} exists`);
       tasks = [...tasks, { ...task, tags: [...task.tags] }];
+      emitTaskSaved(task);
     },
     async markTaskDone(id, doneAt) {
-      requireUser();
+      beginSave();
       replaceTask({ ...requireTask(id), done: true, doneAt });
     },
     async markTaskNotDone(id, position) {
-      requireUser();
+      beginSave();
       replaceTask({ ...requireTask(id), done: false, doneAt: null, position });
     },
     async updateTask(id, changes) {
-      requireUser();
+      beginSave();
       if (changes.title !== undefined && !changes.title.trim()) throw new Error("A Task needs a title");
       const task = requireTask(id);
       const { title, notes, deadline, tags } = { ...task, ...changes };
       replaceTask({ ...task, title, notes, deadline, tags: [...tags] });
     },
     async deleteTask(id) {
-      requireUser();
+      beginSave();
       requireTask(id);
       tasks = tasks.filter((t) => t.id !== id);
+      emit({ kind: "taskDeleted", id });
     },
     async moveTask(id, { day, categoryId }, position) {
-      requireUser();
+      beginSave();
       if ((day === null) === (categoryId === null)) {
         throw new Error("A Task must be in exactly one of a day or a Category");
       }
@@ -177,9 +220,20 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       replaceTask({ ...requireTask(id), day, categoryId, position });
     },
     async clearDoneTasks(categoryId) {
-      requireUser();
+      beginSave();
       requireCategory(categoryId);
-      tasks = tasks.filter((t) => !(t.categoryId === categoryId && t.done));
+      const cleared = tasks.filter((t) => t.categoryId === categoryId && t.done);
+      tasks = tasks.filter((t) => !cleared.includes(t));
+      cleared.forEach((t) => emit({ kind: "taskDeleted", id: t.id }));
+    },
+
+    rejectNextSave() {
+      rejectingNextSave = true;
+    },
+
+    subscribeToChanges(listener) {
+      changeListeners.add(listener);
+      return () => changeListeners.delete(listener);
     },
   };
 }

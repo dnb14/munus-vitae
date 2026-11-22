@@ -11,18 +11,20 @@ import type { TaskLineActions } from "./TaskLines";
 import { useEffectiveTheme } from "./theme";
 import { TopBar } from "./TopBar";
 import { useCategories } from "./useCategories";
+import { useSaveFailures } from "./useSaveFailures";
 import { useSettings } from "./useSettings";
 import { useTasks } from "./useTasks";
 
 /** The signed-in page: the top bar, the Day row (60%) and the Category row (40%). */
 export function Board({ user }: { user: User }) {
-  const { settings, updateSettings } = useSettings();
+  const { failures, showingMessage, dismissMessage } = useSaveFailures();
+  const { settings, updateSettings } = useSettings(failures);
   // Today is read once per page load; ticket 10 adds the clock that notices midnight.
   const [todayDate] = useState<CalendarDate>(today);
   const [dayRowStart, setDayRowStart] = useState<CalendarDate>(todayDate);
   const theme = useEffectiveTheme(settings?.theme ?? null);
-  const { tasks, createTask, setDone, updateTask, deleteTask, moveTask, clearDone, forgetCategoryTasks } = useTasks();
-  const categoryActions = useCategories();
+  const { tasks, createTask, setDone, updateTask, deleteTask, moveTask, clearDone, forgetCategoryTasks } = useTasks(failures);
+  const categoryActions = useCategories(failures);
   const { categories } = categoryActions;
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -105,6 +107,14 @@ export function Board({ user }: { user: User }) {
           }}
           onClose={() => setEditingTaskId(null)}
         />
+      )}
+      {showingMessage && (
+        <div className="save-failed" role="alert">
+          Couldn't save your change, so it's been undone.
+          <button type="button" className="button button--quiet button--icon" aria-label="Dismiss" onClick={dismissMessage}>
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
       )}
     </div>
   );

@@ -2,10 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { App } from "../App";
-import type { Backend } from "../backend/backend";
-import { createInMemoryBackend } from "../backend/inMemoryBackend";
+import { createInMemoryBackend, type InMemoryBackend } from "../backend/inMemoryBackend";
 
-export function renderApp(backend: Backend = createInMemoryBackend()) {
+export function renderApp(backend: InMemoryBackend = createInMemoryBackend()) {
   const user = userEvent.setup();
   const view = render(<App backend={backend} />);
   return { user, backend, ...view };
@@ -22,7 +21,7 @@ export async function renderSignedIn(
 }
 
 /** Renders the app again against an existing backend, as after a page reload. */
-export async function reloadApp(backend: Backend) {
+export async function reloadApp(backend: InMemoryBackend) {
   const result = renderApp(backend);
   await waitForBoard();
   return result;

@@ -54,6 +54,17 @@ export type Task = {
 /** The parts of a Task the Task editor changes. */
 export type TaskDetails = Pick<Task, "title" | "notes" | "deadline" | "tags">;
 
+/**
+ * A saved change to the user's data, as it now stands. Deleting a Category
+ * also deletes its Tasks, whether or not a `taskDeleted` arrives for each.
+ */
+export type DataChange =
+  | { kind: "taskSaved"; task: Task }
+  | { kind: "taskDeleted"; id: string }
+  | { kind: "categorySaved"; category: Category }
+  | { kind: "categoryDeleted"; id: string }
+  | { kind: "settingsSaved"; settings: Settings };
+
 export type Backend = {
   /** The currently signed-in user, or null when signed out. */
   getCurrentUser(): Promise<User | null>;
@@ -98,6 +109,13 @@ export type Backend = {
   moveTask(id: string, to: Pick<Task, "day" | "categoryId">, position: string): Promise<void>;
   /** Deletes the Done Tasks in a Category. Its unfinished Tasks stay. */
   clearDoneTasks(categoryId: string): Promise<void>;
+
+  /**
+   * Calls the listener with every saved change to the signed-in user's Tasks,
+   * Categories and Settings, made on any device or tab, including this one.
+   * A rejected command sends nothing. Returns an unsubscribe function.
+   */
+  subscribeToChanges(listener: (change: DataChange) => void): () => void;
 };
 
 /** Sorts by ordering key. Keys compare by code unit, never by locale. */

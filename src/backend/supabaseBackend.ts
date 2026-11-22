@@ -1,5 +1,15 @@
-import { createClient, type User as SupabaseUser } from "@supabase/supabase-js";
-import { DEFAULT_SETTINGS, type Backend, type Category, type DayCount, type Task, type Theme, type User } from "./backend";
+import { createClient, type RealtimeChannel, type User as SupabaseUser } from "@supabase/supabase-js";
+import {
+  DEFAULT_SETTINGS,
+  type Backend,
+  type Category,
+  type DataChange,
+  type DayCount,
+  type Settings,
+  type Task,
+  type Theme,
+  type User,
+} from "./backend";
 
 /**
  * The real backend. Not covered by automated tests (see the spec's Testing
@@ -7,6 +17,41 @@ import { DEFAULT_SETTINGS, type Backend, type Category, type DayCount, type Task
  */
 export function createSupabaseBackend(url: string, publishableKey: string): Backend {
   const supabase = createClient(url, publishableKey);
+
+  // One Realtime channel per tab, shared by every subscriber while any remain.
+  const changeListeners = new Set<(change: DataChange) => void>();
+  let channel: RealtimeChannel | null = null;
+
+  function emit(change: DataChange) {
+    changeListeners.forEach((listener) => listener(change));
+  }
+
+  // Realtime sends only the rows row-level security lets this user read.
+  // A delete carries just the id: Realtime can't check who owned a deleted
+  // row, so ids of other users' rows may arrive, and match nothing here.
+  function openChangesChannel(): RealtimeChannel {
+    return supabase
+      .channel("data-changes")
+      .on<TaskRow>("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          if (payload.old.id) emit({ kind: "taskDeleted", id: payload.old.id });
+        } else {
+          emit({ kind: "taskSaved", task: fromTaskRow(payload.new) });
+        }
+      })
+      .on<Category>("postgres_changes", { event: "*", schema: "public", table: "categories" }, (payload) => {
+        if (payload.eventType === "DELETE") {
+          if (payload.old.id) emit({ kind: "categoryDeleted", id: payload.old.id });
+        } else {
+          const { id, name, position } = payload.new;
+          emit({ kind: "categorySaved", category: { id, name, position } });
+        }
+      })
+      .on<SettingsRow>("postgres_changes", { event: "*", schema: "public", table: "settings" }, (payload) => {
+        if (payload.eventType !== "DELETE") emit({ kind: "settingsSaved", settings: fromSettingsRow(payload.new) });
+      })
+      .subscribe();
+  }
 
   async function requireUserId(): Promise<string> {
     const { data } = await supabase.auth.getSession();
@@ -41,7 +86,7 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       const { data, error } = await supabase.from("settings").select("day_count, theme").maybeSingle();
       if (error) throw error;
       if (!data) return { ...DEFAULT_SETTINGS };
-      return { dayCount: data.day_count as DayCount, theme: data.theme as Theme | null };
+      return fromSettingsRow(data as SettingsRow);
     },
     async updateSettings(changes) {
       const userId = await requireUserId();
@@ -73,8 +118,7 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
     },
     async deleteCategory(id) {
       // The tasks.category_id foreign key cascades, so its Tasks go too.
-      const { error } = await supabase.from("categories").delete().eq("id", id);
-      if (error) throw error;
+      requireRow(await supabase.from("categories").delete().eq("id", id).select("id"));
     },
 
     async getTasks() {
@@ -103,8 +147,7 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       await updateTask(id, row);
     },
     async deleteTask(id) {
-      const { error } = await supabase.from("tasks").delete().eq("id", id);
-      if (error) throw error;
+      requireRow(await supabase.from("tasks").delete().eq("id", id).select("id"));
     },
     async moveTask(id, { day, categoryId }, position) {
       // The schema's check constraint rejects a Task with both or neither of day and category.
@@ -114,23 +157,55 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       const { error } = await supabase.from("tasks").delete().eq("category_id", categoryId).eq("done", true);
       if (error) throw error;
     },
+
+    subscribeToChanges(listener) {
+      changeListeners.add(listener);
+      if (!channel) channel = openChangesChannel();
+      return () => {
+        changeListeners.delete(listener);
+        if (changeListeners.size === 0 && channel) {
+          void supabase.removeChannel(channel);
+          channel = null;
+        }
+      };
+    },
   };
 
   async function updateTask(id: string, changes: Partial<TaskRow>) {
-    const { error } = await supabase
-      .from("tasks")
-      .update({ ...changes, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) throw error;
+    requireRow(
+      await supabase
+        .from("tasks")
+        .update({ ...changes, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select("id"),
+    );
   }
 
   async function updateCategory(id: string, changes: { name?: string; position?: string }) {
-    const { error } = await supabase
-      .from("categories")
-      .update({ ...changes, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) throw error;
+    requireRow(
+      await supabase
+        .from("categories")
+        .update({ ...changes, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select("id"),
+    );
   }
+}
+
+/**
+ * Throws unless an update or delete reached its row. Supabase reports no error
+ * when the row is gone (say, deleted on another device), but the in-memory
+ * backend rejects that, and the screen must be put back either way.
+ */
+function requireRow({ data, error }: { data: unknown[] | null; error: unknown }) {
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error("That row no longer exists");
+}
+
+type SettingsRow = { day_count: number; theme: string | null };
+
+function fromSettingsRow(row: SettingsRow): Settings {
+  return { dayCount: row.day_count as DayCount, theme: row.theme as Theme | null };
 }
 
 const TASK_COLUMNS = "id, title, notes, deadline, tags, done, done_at, day, category_id, position";

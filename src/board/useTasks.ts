@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Task, TaskDetails } from "../backend/backend";
 import { useBackend } from "../backend/BackendContext";
+import type { SaveFailures } from "./useSaveFailures";
 import { doneAtFor, whereDropLands, newTaskPosition, placeFields, placeOf, type DropTarget, type Place } from "./boardModel";
 
 /**
- * Loads the user's Tasks and saves changes. Changes show immediately;
- * handling a failed save comes with ticket 09.
+ * Loads the user's Tasks and saves changes. Changes show
+ * immediately; when the Backend rejects one, `failures` counts it and this
+ * reloads what is really saved.
  */
-export function useTasks() {
+export function useTasks({ count: failureCount, watch }: SaveFailures) {
   const backend = useBackend();
   const [tasks, setTasks] = useState<Task[] | null>(null);
   // The latest Tasks, so several Tasks added before a re-render each get the next position.
@@ -26,7 +28,26 @@ export function useTasks() {
     return () => {
       active = false;
     };
-  }, [backend, replaceTasks]);
+  }, [backend, failureCount, replaceTasks]);
+
+  // Merge saved changes from every device, this one included.
+  useEffect(
+    () =>
+      backend.subscribeToChanges((change) => {
+        const current = latest.current;
+        if (!current) return;
+        if (change.kind === "taskSaved") {
+          const { task } = change;
+          const exists = current.some((t) => t.id === task.id);
+          replaceTasks(exists ? current.map((t) => (t.id === task.id ? task : t)) : [...current, task]);
+        } else if (change.kind === "taskDeleted") {
+          replaceTasks(current.filter((t) => t.id !== change.id));
+        } else if (change.kind === "categoryDeleted") {
+          replaceTasks(current.filter((t) => t.categoryId !== change.id));
+        }
+      }),
+    [backend, replaceTasks],
+  );
 
   const createTask = useCallback(
     (place: Place, title: string) => {
@@ -44,9 +65,9 @@ export function useTasks() {
         position: newTaskPosition(current, place),
       };
       replaceTasks([...current, task]);
-      void backend.createTask(task);
+      watch(backend.createTask(task));
     },
-    [backend, replaceTasks],
+    [backend, watch, replaceTasks],
   );
 
   /** Ticks a Task (Done, at the bottom of its column) or unticks it (back at the end of the unfinished Tasks). */
@@ -59,14 +80,14 @@ export function useTasks() {
       if (done) {
         const doneAt = doneAtFor(current, place, new Date());
         replaceTasks(current.map((t) => (t.id === taskId ? { ...t, done: true, doneAt } : t)));
-        void backend.markTaskDone(taskId, doneAt);
+        watch(backend.markTaskDone(taskId, doneAt));
       } else {
         const position = newTaskPosition(current, place);
         replaceTasks(current.map((t) => (t.id === taskId ? { ...t, done: false, doneAt: null, position } : t)));
-        void backend.markTaskNotDone(taskId, position);
+        watch(backend.markTaskNotDone(taskId, position));
       }
     },
-    [backend, replaceTasks],
+    [backend, watch, replaceTasks],
   );
 
   /** Saves changed details of a Task. Unchanged details, and an empty title, are ignored. */
@@ -78,9 +99,9 @@ export function useTasks() {
       const changed = changedDetails(task, changes);
       if (Object.keys(changed).length === 0) return;
       replaceTasks(current.map((t) => (t.id === taskId ? { ...t, ...changed } : t)));
-      void backend.updateTask(taskId, changed);
+      watch(backend.updateTask(taskId, changed));
     },
-    [backend, replaceTasks],
+    [backend, watch, replaceTasks],
   );
 
   const deleteTask = useCallback(
@@ -88,9 +109,9 @@ export function useTasks() {
       const current = latest.current;
       if (!current) return;
       replaceTasks(current.filter((t) => t.id !== taskId));
-      void backend.deleteTask(taskId);
+      watch(backend.deleteTask(taskId));
     },
-    [backend, replaceTasks],
+    [backend, watch, replaceTasks],
   );
 
   /** Moves a dropped Task to where the Board model says it lands. Only that Task changes. */
@@ -102,9 +123,9 @@ export function useTasks() {
       if (!landed) return;
       const fields = placeFields(landed.place);
       replaceTasks(current.map((t) => (t.id === taskId ? { ...t, ...fields, position: landed.position } : t)));
-      void backend.moveTask(taskId, fields, landed.position);
+      watch(backend.moveTask(taskId, fields, landed.position));
     },
-    [backend, replaceTasks],
+    [backend, watch, replaceTasks],
   );
 
   /** Removes a Category's Done Tasks. */
@@ -113,9 +134,9 @@ export function useTasks() {
       const current = latest.current;
       if (!current) return;
       replaceTasks(current.filter((task) => !(task.categoryId === categoryId && task.done)));
-      void backend.clearDoneTasks(categoryId);
+      watch(backend.clearDoneTasks(categoryId));
     },
-    [backend, replaceTasks],
+    [backend, watch, replaceTasks],
   );
 
   /** Drops a deleted Category's Tasks from the screen. The Backend deletes them with the Category. */
