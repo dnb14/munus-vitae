@@ -85,6 +85,23 @@ export function categoryTaskCount(tasks: Task[], categoryId: string): number {
   return tasks.filter((task) => task.categoryId === categoryId).length;
 }
 
+/** Whether a Task's Deadline has passed (it is before Today) while the Task isn't Done. */
+export function isOverdue(task: Task, today: CalendarDate): boolean {
+  return task.deadline !== null && !task.done && task.deadline < today;
+}
+
+/** Whether a Task matches the active Tag filter. With no filter, every Task matches. */
+export function matchesTagFilter(task: Task, activeTag: string | null): boolean {
+  return activeTag === null || task.tags.includes(activeTag);
+}
+
+/** The Tags with one more added at the end. Blank Tags and ones the Task already has are ignored. */
+export function withTag(tags: string[], tag: string): string[] {
+  const trimmed = tag.trim();
+  if (!trimmed || tags.includes(trimmed)) return tags;
+  return [...tags, trimmed];
+}
+
 /** Oldest first, comparing moments rather than text, since timestamps arrive in more than one format. */
 function byDoneAt(a: Task, b: Task): number {
   return Date.parse(a.doneAt ?? "") - Date.parse(b.doneAt ?? "") || 0;

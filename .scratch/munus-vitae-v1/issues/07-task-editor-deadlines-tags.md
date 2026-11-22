@@ -4,15 +4,15 @@
 
 **Blocked by:** 05: Lines and adding Tasks.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The Backend interface can update a Task's title, deadline, notes and tags, and delete a Task, in both backends
-- [ ] Clicking a Task's text opens the editor; the checkbox doesn't open it
-- [ ] Title, Deadline, Notes and Tags save and survive a reload; an empty title is rejected
-- [ ] Tags are added by typing and removed individually; duplicates on the same Task are ignored
-- [ ] Delete removes the Task
-- [ ] The Deadline badge shows the date; it turns red when the date is before Today and the Task isn't Done
-- [ ] Setting a Deadline doesn't change the Task's day or Category
-- [ ] Clicking a Tag chip dims every Task without that Tag in both rows; the top bar shows the Tag with ✕; ✕ clears the filter
-- [ ] The Board model answers "does this Task match the active Tag filter"
-- [ ] App-level tests (with a faked clock) cover editing each field, Delete, the badge turning red after the Deadline passes, and applying and clearing a Tag filter
+- [x] The Backend interface can update a Task's title, deadline, notes and tags, and delete a Task, in both backends
+- [x] Clicking a Task's text opens the editor; the checkbox doesn't open it
+- [x] Title, Deadline, Notes and Tags save and survive a reload; an empty title is rejected
+- [x] Tags are added by typing and removed individually; duplicates on the same Task are ignored
+- [x] Delete removes the Task
+- [x] The Deadline badge shows the date; it turns red when the date is before Today and the Task isn't Done
+- [x] Setting a Deadline doesn't change the Task's day or Category
+- [x] Clicking a Tag chip dims every Task without that Tag in both rows; the top bar shows the Tag with ✕; ✕ clears the filter
+- [x] The Board model answers "does this Task match the active Tag filter"
+- [x] App-level tests (with a faked clock) cover editing each field, Delete, the badge turning red after the Deadline passes, and applying and clearing a Tag filter

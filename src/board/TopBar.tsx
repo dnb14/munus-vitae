@@ -12,7 +12,15 @@ export type Navigation = {
 
 const DAY_COUNTS: DayCount[] = [5, 6, 7];
 
-export function TopBar({ user, navigation }: { user: User; navigation: Navigation | null }) {
+type Props = {
+  user: User;
+  navigation: Navigation | null;
+  /** The Tag the page is filtered by, or null. */
+  activeTag: string | null;
+  onClearTag(): void;
+};
+
+export function TopBar({ user, navigation, activeTag, onClearTag }: Props) {
   const backend = useBackend();
 
   return (
@@ -51,6 +59,15 @@ export function TopBar({ user, navigation }: { user: User; navigation: Navigatio
             {navigation.theme === "dark" ? "☀" : "☾"}
           </IconButton>
         </>
+      )}
+
+      {activeTag !== null && (
+        <div className="active-tag" role="group" aria-label="Tag filter">
+          <span className="active-tag__name">{activeTag}</span>
+          <button type="button" className="active-tag__clear" aria-label="Clear tag filter" title="Clear tag filter" onClick={onClearTag}>
+            ✕
+          </button>
+        </div>
       )}
 
       <div className="top-bar__spacer" />

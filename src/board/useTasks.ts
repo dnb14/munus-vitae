@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Task } from "../backend/backend";
+import type { Task, TaskDetails } from "../backend/backend";
 import { useBackend } from "../backend/BackendContext";
 import { doneAtFor, newTaskPosition, placeFields, placeOf, type Place } from "./boardModel";
 
@@ -69,6 +69,30 @@ export function useTasks() {
     [backend, replaceTasks],
   );
 
+  /** Saves changed details of a Task. Unchanged details, and an empty title, are ignored. */
+  const updateTask = useCallback(
+    (taskId: string, changes: Partial<TaskDetails>) => {
+      const current = latest.current;
+      const task = current?.find((t) => t.id === taskId);
+      if (!current || !task) return;
+      const changed = changedDetails(task, changes);
+      if (Object.keys(changed).length === 0) return;
+      replaceTasks(current.map((t) => (t.id === taskId ? { ...t, ...changed } : t)));
+      void backend.updateTask(taskId, changed);
+    },
+    [backend, replaceTasks],
+  );
+
+  const deleteTask = useCallback(
+    (taskId: string) => {
+      const current = latest.current;
+      if (!current) return;
+      replaceTasks(current.filter((t) => t.id !== taskId));
+      void backend.deleteTask(taskId);
+    },
+    [backend, replaceTasks],
+  );
+
   /** Removes a Category's Done Tasks. */
   const clearDone = useCallback(
     (categoryId: string) => {
@@ -89,5 +113,19 @@ export function useTasks() {
     [replaceTasks],
   );
 
-  return { tasks, createTask, setDone, clearDone, forgetCategoryTasks };
+  return { tasks, createTask, setDone, updateTask, deleteTask, clearDone, forgetCategoryTasks };
+}
+
+/** The details in `changes` that differ from the Task's, leaving out an empty title. */
+function changedDetails(task: Task, changes: Partial<TaskDetails>): Partial<TaskDetails> {
+  const changed: Partial<TaskDetails> = {};
+  if (changes.title !== undefined && changes.title.trim() && changes.title !== task.title) changed.title = changes.title;
+  if (changes.notes !== undefined && changes.notes !== task.notes) changed.notes = changes.notes;
+  if (changes.deadline !== undefined && changes.deadline !== task.deadline) changed.deadline = changes.deadline;
+  if (changes.tags !== undefined && !sameTags(changes.tags, task.tags)) changed.tags = changes.tags;
+  return changed;
+}
+
+function sameTags(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((tag, i) => tag === b[i]);
 }

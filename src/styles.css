@@ -1,6 +1,8 @@
 :root {
   --accent: #fd8a8a;
   --accent-contrast: #2b1010;
+  /* Overdue warnings: a deeper red than the accent, so they don't read as highlights. */
+  --overdue: #c62828;
 
   --bg: #fbfaf8;
   --surface: #ffffff;
@@ -364,11 +366,112 @@ body {
   min-width: 0;
 }
 
+.task-line {
+  gap: 6px;
+  transition: opacity 0.15s;
+}
+
 .task-line__title {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.task-line__title:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A Tag filter is on and this Task doesn't have the Tag. */
+.task-line--dimmed {
+  opacity: 0.3;
+}
+
+.deadline-badge {
+  flex: none;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 3px;
+  color: var(--text-muted);
+  border: 1px solid var(--line);
+}
+
+.deadline-badge--overdue {
+  color: #fff;
+  background: var(--overdue);
+  border-color: var(--overdue);
+}
+
+.tag-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: var(--line);
+  cursor: pointer;
+}
+
+.tag-chip:hover,
+.tag-chip[aria-pressed="true"] {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+
+.tag-chip--editable {
+  cursor: default;
+}
+
+.tag-chip--editable:hover {
+  color: var(--text-muted);
+  background: var(--line);
+}
+
+.tag-chip__remove {
+  font: inherit;
+  font-size: 10px;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0 0 0 2px;
+  cursor: pointer;
+}
+
+.active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 1px 4px 1px 8px;
+  border-radius: 999px;
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+
+.active-tag__clear {
+  font: inherit;
+  font-size: 10px;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
 }
 
 /* The checkbox takes no room until the Task is hovered or focused. */
@@ -438,4 +541,64 @@ body {
 
 .dialog__confirm {
   padding: 4px 12px;
+}
+
+.task-editor {
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-editor__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.task-editor__input {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 6px;
+}
+
+.task-editor__input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.task-editor__notes {
+  resize: vertical;
+}
+
+.task-editor__deadline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-editor__tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.task-editor__tags:empty {
+  display: none;
+}
+
+.task-editor__delete:hover {
+  color: var(--overdue);
 }

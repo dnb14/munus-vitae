@@ -51,6 +51,9 @@ export type Task = {
   position: string;
 };
 
+/** The parts of a Task the Task editor changes. */
+export type TaskDetails = Pick<Task, "title" | "notes" | "deadline" | "tags">;
+
 export type Backend = {
   /** The currently signed-in user, or null when signed out. */
   getCurrentUser(): Promise<User | null>;
@@ -82,6 +85,12 @@ export type Backend = {
   markTaskDone(id: string, doneAt: string): Promise<void>;
   /** Marks a Done Task unfinished again, clearing its doneAt and giving it a new position. */
   markTaskNotDone(id: string, position: string): Promise<void>;
+  /**
+   * Saves the given details of a Task, leaving the others as they are. Never
+   * moves it: a Deadline doesn't change its day or Category. The title can't be empty.
+   */
+  updateTask(id: string, changes: Partial<TaskDetails>): Promise<void>;
+  deleteTask(id: string): Promise<void>;
   /** Deletes the Done Tasks in a Category. Its unfinished Tasks stay. */
   clearDoneTasks(categoryId: string): Promise<void>;
 };

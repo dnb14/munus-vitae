@@ -8,20 +8,20 @@ import { CategoryMenu } from "./CategoryMenu";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { useDragSensors } from "./dragAndDrop";
 import { NameInput } from "./NameInput";
-import { TaskLines } from "./TaskLines";
+import { TaskLines, type TaskLineActions } from "./TaskLines";
 import { useCategories } from "./useCategories";
 
 type Props = {
   tasks: Task[];
   onAddTask(categoryId: string, title: string): void;
-  onSetDone(taskId: string, done: boolean): void;
+  taskActions: TaskLineActions;
   onClearDone(categoryId: string): void;
   /** Called after a Category is deleted, so its Tasks leave the screen too. */
   onCategoryDeleted(categoryId: string): void;
 };
 
 /** The Category row: one column per Category, in order, then "+ Add category". */
-export function CategoryRow({ tasks, onAddTask, onSetDone, onClearDone, onCategoryDeleted }: Props) {
+export function CategoryRow({ tasks, onAddTask, taskActions, onClearDone, onCategoryDeleted }: Props) {
   const { categories, createCategory, renameCategory, deleteCategory, moveCategory } = useCategories();
   const sensors = useDragSensors();
   // The Category waiting for "Delete <name> and its N tasks?" to be answered.
@@ -69,7 +69,7 @@ export function CategoryRow({ tasks, onAddTask, onSetDone, onClearDone, onCatego
               category={category}
               tasks={tasks}
               onAddTask={(title) => onAddTask(category.id, title)}
-              onSetDone={onSetDone}
+              taskActions={taskActions}
               onClearDone={() => onClearDone(category.id)}
               onRename={(name) => renameCategory(category.id, name)}
               onDelete={() => requestDelete(category)}
@@ -101,13 +101,13 @@ type ColumnProps = {
   category: Category;
   tasks: Task[];
   onAddTask(title: string): void;
-  onSetDone(taskId: string, done: boolean): void;
+  taskActions: TaskLineActions;
   onClearDone(): void;
   onRename(name: string): void;
   onDelete(): void;
 };
 
-function CategoryColumn({ category, tasks, onAddTask, onSetDone, onClearDone, onRename, onDelete }: ColumnProps) {
+function CategoryColumn({ category, tasks, onAddTask, taskActions, onClearDone, onRename, onDelete }: ColumnProps) {
   const place = { categoryId: category.id };
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id,
@@ -153,7 +153,7 @@ function CategoryColumn({ category, tasks, onAddTask, onSetDone, onClearDone, on
         )}
         <CategoryMenu categoryName={category.name} onClearDone={onClearDone} onDelete={onDelete} />
       </div>
-      <TaskLines contents={columnContents(tasks, place)} onAdd={onAddTask} onSetDone={onSetDone} />
+      <TaskLines contents={columnContents(tasks, place)} onAdd={onAddTask} taskActions={taskActions} />
     </div>
   );
 }

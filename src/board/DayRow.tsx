@@ -1,7 +1,7 @@
 import type { Task } from "../backend/backend";
 import { columnContents, dayRowDates, isPast } from "./boardModel";
 import { dayColumnFullLabel, dayColumnLabel, type CalendarDate } from "./dates";
-import { TaskLines } from "./TaskLines";
+import { TaskLines, type TaskLineActions } from "./TaskLines";
 
 type Props = {
   start: CalendarDate;
@@ -9,10 +9,10 @@ type Props = {
   today: CalendarDate;
   tasks: Task[];
   onAddTask(day: CalendarDate, title: string): void;
-  onSetDone(taskId: string, done: boolean): void;
+  taskActions: TaskLineActions;
 };
 
-export function DayRow({ start, count, today, tasks, onAddTask, onSetDone }: Props) {
+export function DayRow({ start, count, today, tasks, onAddTask, taskActions }: Props) {
   const dates = dayRowDates(start, count);
 
   return (
@@ -36,7 +36,7 @@ export function DayRow({ start, count, today, tasks, onAddTask, onSetDone }: Pro
             <TaskLines
               contents={columnContents(tasks, place)}
               onAdd={(title) => onAddTask(date, title)}
-              onSetDone={onSetDone}
+              taskActions={taskActions}
             />
           </div>
         );

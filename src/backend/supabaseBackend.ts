@@ -93,6 +93,19 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
     async markTaskNotDone(id, position) {
       await updateTask(id, { done: false, done_at: null, position });
     },
+    async updateTask(id, changes) {
+      // Only the details given are written; day, category and position are never touched.
+      const row: Partial<TaskRow> = {};
+      if (changes.title !== undefined) row.title = changes.title;
+      if (changes.notes !== undefined) row.notes = changes.notes;
+      if (changes.deadline !== undefined) row.deadline = changes.deadline;
+      if (changes.tags !== undefined) row.tags = changes.tags;
+      await updateTask(id, row);
+    },
+    async deleteTask(id) {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
     async clearDoneTasks(categoryId) {
       const { error } = await supabase.from("tasks").delete().eq("category_id", categoryId).eq("done", true);
       if (error) throw error;

@@ -15,7 +15,8 @@ type Options = {
    * either a `day` ("YYYY-MM-DD") or a `category` (by its name, from `categories`).
    * A Task with `doneAt` (an ISO timestamp) is Done.
    */
-  tasks?: ({ title: string; doneAt?: string } & ({ day: string } | { category: string }))[];
+  tasks?: ({ title: string; doneAt?: string } & Partial<Pick<Task, "notes" | "deadline" | "tags">> &
+    ({ day: string } | { category: string }))[];
 };
 
 const DEFAULT_GOOGLE_USER: Omit<User, "id"> = { name: "Test User" };
@@ -37,9 +38,9 @@ export function createInMemoryBackend(options: Options = {}): Backend {
   let tasks: Task[] = initialTasks.map((task, i) => ({
     id: `task-${i + 1}`,
     title: task.title,
-    notes: null,
-    deadline: null,
-    tags: [],
+    notes: task.notes ?? null,
+    deadline: task.deadline ?? null,
+    tags: [...(task.tags ?? [])],
     done: task.doneAt !== undefined,
     doneAt: task.doneAt ?? null,
     day: "day" in task ? task.day : null,
@@ -154,6 +155,18 @@ export function createInMemoryBackend(options: Options = {}): Backend {
     async markTaskNotDone(id, position) {
       requireUser();
       replaceTask({ ...requireTask(id), done: false, doneAt: null, position });
+    },
+    async updateTask(id, changes) {
+      requireUser();
+      if (changes.title !== undefined && !changes.title.trim()) throw new Error("A Task needs a title");
+      const task = requireTask(id);
+      const { title, notes, deadline, tags } = { ...task, ...changes };
+      replaceTask({ ...task, title, notes, deadline, tags: [...tags] });
+    },
+    async deleteTask(id) {
+      requireUser();
+      requireTask(id);
+      tasks = tasks.filter((t) => t.id !== id);
     },
     async clearDoneTasks(categoryId) {
       requireUser();

@@ -5,6 +5,8 @@ import { LINE_HEIGHT } from "./boardModel";
 import { CategoryRow } from "./CategoryRow";
 import { addDays, today, type CalendarDate } from "./dates";
 import { DayRow } from "./DayRow";
+import { TaskEditor } from "./TaskEditor";
+import type { TaskLineActions } from "./TaskLines";
 import { useEffectiveTheme } from "./theme";
 import { TopBar } from "./TopBar";
 import { useSettings } from "./useSettings";
@@ -17,7 +19,18 @@ export function Board({ user }: { user: User }) {
   const [todayDate] = useState<CalendarDate>(today);
   const [dayRowStart, setDayRowStart] = useState<CalendarDate>(todayDate);
   const theme = useEffectiveTheme(settings?.theme ?? null);
-  const { tasks, createTask, setDone, clearDone, forgetCategoryTasks } = useTasks();
+  const { tasks, createTask, setDone, updateTask, deleteTask, clearDone, forgetCategoryTasks } = useTasks();
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const editingTask = tasks?.find((task) => task.id === editingTaskId) ?? null;
+
+  const taskActions: TaskLineActions = {
+    today: todayDate,
+    activeTag,
+    onSetDone: setDone,
+    onEdit: setEditingTaskId,
+    onPickTag: setActiveTag,
+  };
 
   return (
     <div className="board" style={{ "--line-height": `${LINE_HEIGHT}px` } as CSSProperties}>
@@ -33,6 +46,8 @@ export function Board({ user }: { user: User }) {
             toggleTheme: () => updateSettings({ theme: theme === "dark" ? "light" : "dark" }),
           }
         }
+        activeTag={activeTag}
+        onClearTag={() => setActiveTag(null)}
       />
       <section className="day-row" aria-label="Day row">
         {settings && tasks && (
@@ -42,7 +57,7 @@ export function Board({ user }: { user: User }) {
             today={todayDate}
             tasks={tasks}
             onAddTask={(day, title) => createTask({ day }, title)}
-            onSetDone={setDone}
+            taskActions={taskActions}
           />
         )}
       </section>
@@ -51,12 +66,24 @@ export function Board({ user }: { user: User }) {
           <CategoryRow
             tasks={tasks}
             onAddTask={(categoryId, title) => createTask({ categoryId }, title)}
-            onSetDone={setDone}
+            taskActions={taskActions}
             onClearDone={clearDone}
             onCategoryDeleted={forgetCategoryTasks}
           />
         )}
       </section>
+      {editingTask && (
+        <TaskEditor
+          key={editingTask.id}
+          task={editingTask}
+          onChange={(changes) => updateTask(editingTask.id, changes)}
+          onDelete={() => {
+            setEditingTaskId(null);
+            deleteTask(editingTask.id);
+          }}
+          onClose={() => setEditingTaskId(null)}
+        />
+      )}
     </div>
   );
 }

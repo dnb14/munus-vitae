@@ -39,3 +39,8 @@ export function dayColumnFullLabel(date: CalendarDate): string {
   const local = toLocalDate(date);
   return local.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
+
+/** Deadline badge text, e.g. "26 Nov". */
+export function deadlineLabel(date: CalendarDate): string {
+  return toLocalDate(date).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
