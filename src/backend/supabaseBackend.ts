@@ -1,5 +1,5 @@
 import { createClient, type User as SupabaseUser } from "@supabase/supabase-js";
-import { DEFAULT_SETTINGS, type Backend, type DayCount, type Theme, type User } from "./backend";
+import { DEFAULT_SETTINGS, type Backend, type Category, type DayCount, type Theme, type User } from "./backend";
 
 /**
  * The real backend. Not covered by automated tests (see the spec's Testing
@@ -53,7 +53,37 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       const { error } = await supabase.from("settings").upsert(row, { onConflict: "user_id" });
       if (error) throw error;
     },
+
+    async getCategories() {
+      // position is collated "C" in the schema, so this matches byPosition.
+      const { data, error } = await supabase.from("categories").select("id, name, position").order("position");
+      if (error) throw error;
+      return data as Category[];
+    },
+    async createCategory({ id, name, position }) {
+      const userId = await requireUserId();
+      const { error } = await supabase.from("categories").insert({ id, user_id: userId, name, position });
+      if (error) throw error;
+    },
+    async renameCategory(id, name) {
+      await updateCategory(id, { name });
+    },
+    async moveCategory(id, position) {
+      await updateCategory(id, { position });
+    },
+    async deleteCategory(id) {
+      const { error } = await supabase.from("categories").delete().eq("id", id);
+      if (error) throw error;
+    },
   };
+
+  async function updateCategory(id: string, changes: { name?: string; position?: string }) {
+    const { error } = await supabase
+      .from("categories")
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+  }
 }
 
 function toUser(user: SupabaseUser): User {

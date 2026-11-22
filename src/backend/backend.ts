@@ -23,6 +23,13 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = { dayCount: 7, theme: null };
 
+export type Category = {
+  id: string;
+  name: string;
+  /** Fractional-indexing ordering key; Categories sort by plain string comparison of it. */
+  position: string;
+};
+
 export type Backend = {
   /** The currently signed-in user, or null when signed out. */
   getCurrentUser(): Promise<User | null>;
@@ -35,4 +42,19 @@ export type Backend = {
   getSettings(): Promise<Settings>;
   /** Saves the given Settings fields, leaving the others as they are. */
   updateSettings(changes: Partial<Settings>): Promise<void>;
+
+  /** The signed-in user's Categories, sorted by position. */
+  getCategories(): Promise<Category[]>;
+  /** Creates a Category. The caller picks the id and position, so the screen can show it straight away. */
+  createCategory(category: Category): Promise<void>;
+  renameCategory(id: string, name: string): Promise<void>;
+  /** Moves a Category by giving it a new position. No other Category changes. */
+  moveCategory(id: string, position: string): Promise<void>;
+  /** Deletes a Category (and, once Tasks exist, its Tasks). */
+  deleteCategory(id: string): Promise<void>;
 };
+
+/** Sorts by ordering key. Keys compare by code unit, never by locale. */
+export function byPosition<T extends { position: string }>(a: T, b: T): number {
+  return a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
+}

@@ -17,9 +17,22 @@ export async function renderSignedIn(
 ) {
   const backend = createInMemoryBackend({ signedInAs: { name: "Ada Lovelace" }, ...options });
   const result = renderApp(backend);
+  await waitForBoard();
+  return result;
+}
+
+/** Renders the app again against an existing backend, as after a page reload. */
+export async function reloadApp(backend: Backend) {
+  const result = renderApp(backend);
+  await waitForBoard();
+  return result;
+}
+
+/** Waits until both the Day row and the Category row have loaded. */
+async function waitForBoard() {
   await screen.findByRole("region", { name: "Day row" });
   await screen.findAllByRole("heading", { level: 2 });
-  return result;
+  await screen.findByRole("button", { name: "+ Add category" });
 }
 
 /**

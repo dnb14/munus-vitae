@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { User } from "../backend/backend";
+import { CategoryRow } from "./CategoryRow";
 import { addDays, today, type CalendarDate } from "./dates";
 import { DayRow } from "./DayRow";
 import { useEffectiveTheme } from "./theme";
@@ -32,7 +33,9 @@ export function Board({ user }: { user: User }) {
       <section className="day-row" aria-label="Day row">
         {settings && <DayRow start={dayRowStart} count={settings.dayCount} today={todayDate} />}
       </section>
-      <section className="category-row" aria-label="Category row" />
+      <section className="category-row" aria-label="Category row">
+        <CategoryRow />
+      </section>
     </div>
   );
 }

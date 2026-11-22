@@ -1,7 +1,6 @@
 import { screen, within } from "@testing-library/react";
 import { vi } from "vitest";
-import type { Backend } from "../backend/backend";
-import { renderApp, renderSignedIn, setToday } from "../test/renderApp";
+import { reloadApp, renderSignedIn, setToday } from "../test/renderApp";
 
 function dayHeaders() {
   const dayRow = screen.getByRole("region", { name: "Day row" });
@@ -77,7 +76,7 @@ describe("Day row", () => {
     await vi.waitFor(async () => expect((await backend.getSettings()).dayCount).toBe(6));
 
     unmount();
-    await renderSignedInWith(backend);
+    await reloadApp(backend);
     expect(dayHeaders()).toHaveLength(6);
   });
 
@@ -86,7 +85,7 @@ describe("Day row", () => {
 
     await user.click(screen.getByRole("button", { name: "Forward 7 days" }));
     unmount();
-    await renderSignedInWith(backend);
+    await reloadApp(backend);
 
     expect(dayHeaders()[0]).toBe("Mon 23");
   });
@@ -113,8 +112,3 @@ describe("theme toggle", () => {
     expect(screen.getByRole("button", { name: "Switch to light theme" })).toBeInTheDocument();
   });
 });
-
-async function renderSignedInWith(backend: Backend) {
-  renderApp(backend);
-  await screen.findAllByRole("heading", { level: 2 });
-}
