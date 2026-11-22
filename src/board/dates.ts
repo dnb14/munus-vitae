@@ -27,11 +27,6 @@ export function addDays(date: CalendarDate, days: number): CalendarDate {
   return toCalendarDate(local);
 }
 
-/** The dates shown in the Day row: `count` consecutive days from `start`. */
-export function dayRowDates(start: CalendarDate, count: number): CalendarDate[] {
-  return Array.from({ length: count }, (_, i) => addDays(start, i));
-}
-
 /** Header text for a Day column, e.g. "Mon 23". */
 export function dayColumnLabel(date: CalendarDate): string {
   const local = toLocalDate(date);
@@ -39,7 +34,7 @@ export function dayColumnLabel(date: CalendarDate): string {
   return `${weekday} ${local.getDate()}`;
 }
 
-/** Full date for screen readers, e.g. "Monday 23 November 2026". */
+/** Full date for screen readers, e.g. "Monday, 23 November 2026". */
 export function dayColumnFullLabel(date: CalendarDate): string {
   const local = toLocalDate(date);
   return local.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });

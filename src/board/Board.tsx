@@ -1,11 +1,14 @@
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import type { User } from "../backend/backend";
+import { LINE_HEIGHT } from "./boardModel";
 import { CategoryRow } from "./CategoryRow";
 import { addDays, today, type CalendarDate } from "./dates";
 import { DayRow } from "./DayRow";
 import { useEffectiveTheme } from "./theme";
 import { TopBar } from "./TopBar";
 import { useSettings } from "./useSettings";
+import { useTasks } from "./useTasks";
 
 /** The signed-in page: the top bar, the Day row (60%) and the Category row (40%). */
 export function Board({ user }: { user: User }) {
@@ -14,9 +17,10 @@ export function Board({ user }: { user: User }) {
   const [todayDate] = useState<CalendarDate>(today);
   const [dayRowStart, setDayRowStart] = useState<CalendarDate>(todayDate);
   const theme = useEffectiveTheme(settings?.theme ?? null);
+  const { tasks, createTask, forgetCategoryTasks } = useTasks();
 
   return (
-    <div className="board">
+    <div className="board" style={{ "--line-height": `${LINE_HEIGHT}px` } as CSSProperties}>
       <TopBar
         user={user}
         navigation={
@@ -31,10 +35,24 @@ export function Board({ user }: { user: User }) {
         }
       />
       <section className="day-row" aria-label="Day row">
-        {settings && <DayRow start={dayRowStart} count={settings.dayCount} today={todayDate} />}
+        {settings && tasks && (
+          <DayRow
+            start={dayRowStart}
+            count={settings.dayCount}
+            today={todayDate}
+            tasks={tasks}
+            onAddTask={(day, title) => createTask({ day }, title)}
+          />
+        )}
       </section>
       <section className="category-row" aria-label="Category row">
-        <CategoryRow />
+        {tasks && (
+          <CategoryRow
+            tasks={tasks}
+            onAddTask={(categoryId, title) => createTask({ categoryId }, title)}
+            onCategoryDeleted={forgetCategoryTasks}
+          />
+        )}
       </section>
     </div>
   );

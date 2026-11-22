@@ -44,7 +44,7 @@ export function useCategories() {
     [backend],
   );
 
-  /** Deletes straight away. The confirmation for Categories with Tasks comes in ticket 05. */
+  /** Deletes a Category; the Backend deletes its Tasks with it. Confirming is the caller's job. */
   const deleteCategory = useCallback(
     (id: string) => {
       setCategories((current) => current && current.filter((c) => c.id !== id));

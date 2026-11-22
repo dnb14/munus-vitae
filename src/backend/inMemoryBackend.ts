@@ -1,5 +1,5 @@
 import { generateNKeysBetween } from "fractional-indexing";
-import { byPosition, DEFAULT_SETTINGS, type Backend, type Category, type Settings, type User } from "./backend";
+import { byPosition, DEFAULT_SETTINGS, type Backend, type Category, type Settings, type Task, type User } from "./backend";
 
 type Options = {
   /** Start with this user already signed in. */
@@ -10,6 +10,11 @@ type Options = {
   settings?: Partial<Settings>;
   /** Categories already saved for the user, in order. */
   categories?: { name: string }[];
+  /**
+   * Tasks already saved for the user, in order within each place. Each names
+   * either a `day` ("YYYY-MM-DD") or a `category` (by its name, from `categories`).
+   */
+  tasks?: ({ title: string } & ({ day: string } | { category: string }))[];
 };
 
 const DEFAULT_GOOGLE_USER: Omit<User, "id"> = { name: "Test User" };
@@ -26,7 +31,27 @@ export function createInMemoryBackend(options: Options = {}): Backend {
     name: category.name,
     position: initialPositions[i],
   }));
+  const initialTasks = options.tasks ?? [];
+  const taskPositions = generateNKeysBetween(null, null, initialTasks.length);
+  let tasks: Task[] = initialTasks.map((task, i) => ({
+    id: `task-${i + 1}`,
+    title: task.title,
+    notes: null,
+    deadline: null,
+    tags: [],
+    done: false,
+    doneAt: null,
+    day: "day" in task ? task.day : null,
+    categoryId: "category" in task ? categoryIdNamed(task.category) : null,
+    position: taskPositions[i],
+  }));
   const listeners = new Set<(user: User | null) => void>();
+
+  function categoryIdNamed(name: string): string {
+    const category = categories.find((c) => c.name === name);
+    if (!category) throw new Error(`No Category named ${name}`);
+    return category.id;
+  }
 
   function setUser(user: User | null) {
     currentUser = user;
@@ -94,6 +119,22 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       requireUser();
       requireCategory(id);
       categories = categories.filter((c) => c.id !== id);
+      tasks = tasks.filter((t) => t.categoryId !== id);
+    },
+
+    async getTasks() {
+      requireUser();
+      return tasks.map((t) => ({ ...t, tags: [...t.tags] }));
+    },
+    async createTask(task) {
+      requireUser();
+      if (!task.title.trim()) throw new Error("A Task needs a title");
+      if ((task.day === null) === (task.categoryId === null)) {
+        throw new Error("A Task must be in exactly one of a day or a Category");
+      }
+      if (task.categoryId !== null) requireCategory(task.categoryId);
+      if (tasks.some((t) => t.id === task.id)) throw new Error(`Task ${task.id} exists`);
+      tasks = [...tasks, { ...task, tags: [...task.tags] }];
     },
   };
 }

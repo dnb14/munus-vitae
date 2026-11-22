@@ -2,17 +2,39 @@ import { closestCenter, DndContext, type Announcements, type DragEndEvent } from
 import { horizontalListSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useState } from "react";
-import type { Category } from "../backend/backend";
+import type { Category, Task } from "../backend/backend";
+import { categoryTaskCount, columnContents } from "./boardModel";
 import { CategoryMenu } from "./CategoryMenu";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { useDragSensors } from "./dragAndDrop";
 import { NameInput } from "./NameInput";
+import { TaskLines } from "./TaskLines";
 import { useCategories } from "./useCategories";
 
+type Props = {
+  tasks: Task[];
+  onAddTask(categoryId: string, title: string): void;
+  /** Called after a Category is deleted, so its Tasks leave the screen too. */
+  onCategoryDeleted(categoryId: string): void;
+};
+
 /** The Category row: one column per Category, in order, then "+ Add category". */
-export function CategoryRow() {
+export function CategoryRow({ tasks, onAddTask, onCategoryDeleted }: Props) {
   const { categories, createCategory, renameCategory, deleteCategory, moveCategory } = useCategories();
   const sensors = useDragSensors();
+  // The Category waiting for "Delete <name> and its N tasks?" to be answered.
+  const [confirmingDelete, setConfirmingDelete] = useState<Category | null>(null);
   if (!categories) return null;
+
+  function deleteNow(id: string) {
+    deleteCategory(id);
+    onCategoryDeleted(id);
+  }
+
+  function requestDelete(category: Category) {
+    if (categoryTaskCount(tasks, category.id) === 0) deleteNow(category.id);
+    else setConfirmingDelete(category);
+  }
 
   const nameOf = (id: string | number) => categories.find((c) => c.id === id)?.name ?? "Category";
   const announcements: Announcements = {
@@ -43,24 +65,44 @@ export function CategoryRow() {
             <CategoryColumn
               key={category.id}
               category={category}
+              tasks={tasks}
+              onAddTask={(title) => onAddTask(category.id, title)}
               onRename={(name) => renameCategory(category.id, name)}
-              onDelete={() => deleteCategory(category.id)}
+              onDelete={() => requestDelete(category)}
             />
           ))}
         </SortableContext>
       </DndContext>
       <AddCategoryColumn onCreate={createCategory} />
+      {confirmingDelete && (
+        <ConfirmDialog
+          question={deleteQuestion(confirmingDelete.name, categoryTaskCount(tasks, confirmingDelete.id))}
+          confirmLabel="Delete"
+          onConfirm={() => {
+            setConfirmingDelete(null);
+            deleteNow(confirmingDelete.id);
+          }}
+          onCancel={() => setConfirmingDelete(null)}
+        />
+      )}
     </div>
   );
 }
 
+function deleteQuestion(name: string, taskCount: number): string {
+  return `Delete ${name} and its ${taskCount} ${taskCount === 1 ? "task" : "tasks"}?`;
+}
+
 type ColumnProps = {
   category: Category;
+  tasks: Task[];
+  onAddTask(title: string): void;
   onRename(name: string): void;
   onDelete(): void;
 };
 
-function CategoryColumn({ category, onRename, onDelete }: ColumnProps) {
+function CategoryColumn({ category, tasks, onAddTask, onRename, onDelete }: ColumnProps) {
+  const place = { categoryId: category.id };
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id,
   });
@@ -105,6 +147,7 @@ function CategoryColumn({ category, onRename, onDelete }: ColumnProps) {
         )}
         <CategoryMenu categoryName={category.name} onDelete={onDelete} />
       </div>
+      <TaskLines contents={columnContents(tasks, place)} onAdd={onAddTask} />
     </div>
   );
 }

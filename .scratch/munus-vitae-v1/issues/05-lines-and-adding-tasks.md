@@ -4,14 +4,14 @@
 
 **Blocked by:** 03: Day row, navigation and theme toggle; 04: Categories.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A tasks table matching the spec's data model (title, notes, deadline, tags, done, done_at, day, category with cascade delete, ordering key) with a constraint that exactly one of day/category is set, and owner-only row-level security
-- [ ] The Backend interface can load Tasks and create a Task in a day or Category, in both backends
-- [ ] A **Board model** module answers "what's in this column, in order" and "which dates does the Day row show"; the UI uses it rather than working these out itself
-- [ ] Lines fill each column; Line count = max(fits in height, Task count + 1); Line height is the same across the app
-- [ ] Clicking any empty Line opens an input on the first empty Line; Enter saves and opens the next; Escape or an empty input cancels
-- [ ] Tasks appear in the order added and survive a reload
-- [ ] Switching from 7 to 5 days and back shows the Tasks on days 6–7 again
-- [ ] Deleting a Category with Tasks asks for confirmation naming the Task count; confirming removes the Category and its Tasks, cancelling keeps both
-- [ ] App-level tests cover adding to a Day column and to a Category, snapping when clicking a lower Line, typing several Tasks in a row, cancel, hidden days keeping their Tasks, and deleting a Category with Tasks
+- [x] A tasks table matching the spec's data model (title, notes, deadline, tags, done, done_at, day, category with cascade delete, ordering key) with a constraint that exactly one of day/category is set, and owner-only row-level security
+- [x] The Backend interface can load Tasks and create a Task in a day or Category, in both backends
+- [x] A **Board model** module answers "what's in this column, in order" and "which dates does the Day row show"; the UI uses it rather than working these out itself
+- [x] Lines fill each column; Line count = max(fits in height, Task count + 1); Line height is the same across the app
+- [x] Clicking any empty Line opens an input on the first empty Line; Enter saves and opens the next; Escape or an empty input cancels
+- [x] Tasks appear in the order added and survive a reload
+- [x] Switching from 7 to 5 days and back shows the Tasks on days 6–7 again
+- [x] Deleting a Category with Tasks asks for confirmation naming the Task count; confirming removes the Category and its Tasks, cancelling keeps both
+- [x] App-level tests cover adding to a Day column and to a Category, snapping when clicking a lower Line, typing several Tasks in a row, cancel, hidden days keeping their Tasks, and deleting a Category with Tasks

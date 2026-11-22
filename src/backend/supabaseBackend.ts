@@ -1,5 +1,5 @@
 import { createClient, type User as SupabaseUser } from "@supabase/supabase-js";
-import { DEFAULT_SETTINGS, type Backend, type Category, type DayCount, type Theme, type User } from "./backend";
+import { DEFAULT_SETTINGS, type Backend, type Category, type DayCount, type Task, type Theme, type User } from "./backend";
 
 /**
  * The real backend. Not covered by automated tests (see the spec's Testing
@@ -72,7 +72,19 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       await updateCategory(id, { position });
     },
     async deleteCategory(id) {
+      // The tasks.category_id foreign key cascades, so its Tasks go too.
       const { error } = await supabase.from("categories").delete().eq("id", id);
+      if (error) throw error;
+    },
+
+    async getTasks() {
+      const { data, error } = await supabase.from("tasks").select(TASK_COLUMNS);
+      if (error) throw error;
+      return (data as TaskRow[]).map(fromTaskRow);
+    },
+    async createTask(task) {
+      const userId = await requireUserId();
+      const { error } = await supabase.from("tasks").insert({ ...toTaskRow(task), user_id: userId });
       if (error) throw error;
     },
   };
@@ -84,6 +96,51 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       .eq("id", id);
     if (error) throw error;
   }
+}
+
+const TASK_COLUMNS = "id, title, notes, deadline, tags, done, done_at, day, category_id, position";
+
+type TaskRow = {
+  id: string;
+  title: string;
+  notes: string | null;
+  deadline: string | null;
+  tags: string[];
+  done: boolean;
+  done_at: string | null;
+  day: string | null;
+  category_id: string | null;
+  position: string;
+};
+
+function fromTaskRow(row: TaskRow): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    notes: row.notes,
+    deadline: row.deadline,
+    tags: row.tags ?? [],
+    done: row.done,
+    doneAt: row.done_at,
+    day: row.day,
+    categoryId: row.category_id,
+    position: row.position,
+  };
+}
+
+function toTaskRow(task: Task): TaskRow {
+  return {
+    id: task.id,
+    title: task.title,
+    notes: task.notes,
+    deadline: task.deadline,
+    tags: task.tags,
+    done: task.done,
+    done_at: task.doneAt,
+    day: task.day,
+    category_id: task.categoryId,
+    position: task.position,
+  };
 }
 
 function toUser(user: SupabaseUser): User {

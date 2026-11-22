@@ -1,7 +1,7 @@
 /**
  * The single seam between the app and wherever its data lives.
- * The app reaches sign-in state, Settings (and, in later tickets, Tasks and
- * Categories) only through this interface. There are two implementations: the
+ * The app reaches sign-in state, Settings, Categories and Tasks only through
+ * this interface. There are two implementations: the
  * in-memory backend (tests, local dev) and the Supabase backend.
  */
 
@@ -30,6 +30,27 @@ export type Category = {
   position: string;
 };
 
+/**
+ * A single to-do item. It lives in exactly one place: a day (`day` set) or a
+ * Category (`categoryId` set), never both and never neither.
+ */
+export type Task = {
+  id: string;
+  title: string;
+  notes: string | null;
+  /** "YYYY-MM-DD", or null when there is no Deadline. */
+  deadline: string | null;
+  tags: string[];
+  done: boolean;
+  /** ISO timestamp of when the Task was marked Done; null while unfinished. */
+  doneAt: string | null;
+  /** "YYYY-MM-DD" of the Day column it is in, or null when it is in a Category. */
+  day: string | null;
+  categoryId: string | null;
+  /** Fractional-indexing ordering key within its place. */
+  position: string;
+};
+
 export type Backend = {
   /** The currently signed-in user, or null when signed out. */
   getCurrentUser(): Promise<User | null>;
@@ -50,8 +71,13 @@ export type Backend = {
   renameCategory(id: string, name: string): Promise<void>;
   /** Moves a Category by giving it a new position. No other Category changes. */
   moveCategory(id: string, position: string): Promise<void>;
-  /** Deletes a Category (and, once Tasks exist, its Tasks). */
+  /** Deletes a Category and every Task in it. */
   deleteCategory(id: string): Promise<void>;
+
+  /** All of the signed-in user's Tasks, in no particular order. */
+  getTasks(): Promise<Task[]>;
+  /** Creates a Task. The caller picks the id and position, so the screen can show it straight away. */
+  createTask(task: Task): Promise<void>;
 };
 
 /** Sorts by ordering key. Keys compare by code unit, never by locale. */
