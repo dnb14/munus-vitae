@@ -13,8 +13,9 @@ type Options = {
   /**
    * Tasks already saved for the user, in order within each place. Each names
    * either a `day` ("YYYY-MM-DD") or a `category` (by its name, from `categories`).
+   * A Task with `doneAt` (an ISO timestamp) is Done.
    */
-  tasks?: ({ title: string } & ({ day: string } | { category: string }))[];
+  tasks?: ({ title: string; doneAt?: string } & ({ day: string } | { category: string }))[];
 };
 
 const DEFAULT_GOOGLE_USER: Omit<User, "id"> = { name: "Test User" };
@@ -39,8 +40,8 @@ export function createInMemoryBackend(options: Options = {}): Backend {
     notes: null,
     deadline: null,
     tags: [],
-    done: false,
-    doneAt: null,
+    done: task.doneAt !== undefined,
+    doneAt: task.doneAt ?? null,
     day: "day" in task ? task.day : null,
     categoryId: "category" in task ? categoryIdNamed(task.category) : null,
     position: taskPositions[i],
@@ -66,6 +67,16 @@ export function createInMemoryBackend(options: Options = {}): Backend {
     const category = categories.find((c) => c.id === id);
     if (!category) throw new Error(`No Category ${id}`);
     return category;
+  }
+
+  function requireTask(id: string): Task {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) throw new Error(`No Task ${id}`);
+    return task;
+  }
+
+  function replaceTask(updated: Task) {
+    tasks = tasks.map((t) => (t.id === updated.id ? updated : t));
   }
 
   function replaceCategory(updated: Category) {
@@ -135,6 +146,19 @@ export function createInMemoryBackend(options: Options = {}): Backend {
       if (task.categoryId !== null) requireCategory(task.categoryId);
       if (tasks.some((t) => t.id === task.id)) throw new Error(`Task ${task.id} exists`);
       tasks = [...tasks, { ...task, tags: [...task.tags] }];
+    },
+    async markTaskDone(id, doneAt) {
+      requireUser();
+      replaceTask({ ...requireTask(id), done: true, doneAt });
+    },
+    async markTaskNotDone(id, position) {
+      requireUser();
+      replaceTask({ ...requireTask(id), done: false, doneAt: null, position });
+    },
+    async clearDoneTasks(categoryId) {
+      requireUser();
+      requireCategory(categoryId);
+      tasks = tasks.filter((t) => !(t.categoryId === categoryId && t.done));
     },
   };
 }

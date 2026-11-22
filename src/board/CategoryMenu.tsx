@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 type Props = {
   categoryName: string;
+  onClearDone(): void;
   onDelete(): void;
 };
 
 /** The ⋯ menu on a Category header. Escape or a click elsewhere closes it. */
-export function CategoryMenu({ categoryName, onDelete }: Props) {
+export function CategoryMenu({ categoryName, onClearDone, onDelete }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -51,6 +52,17 @@ export function CategoryMenu({ categoryName, onDelete }: Props) {
         <div className="category-menu__items" role="menu" aria-label={`Actions for ${categoryName}`}>
           <button
             ref={firstItemRef}
+            type="button"
+            role="menuitem"
+            className="category-menu__item"
+            onClick={() => {
+              setOpen(false);
+              onClearDone();
+            }}
+          >
+            Clear done
+          </button>
+          <button
             type="button"
             role="menuitem"
             className="category-menu__item"

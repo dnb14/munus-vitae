@@ -14,12 +14,14 @@ import { useCategories } from "./useCategories";
 type Props = {
   tasks: Task[];
   onAddTask(categoryId: string, title: string): void;
+  onSetDone(taskId: string, done: boolean): void;
+  onClearDone(categoryId: string): void;
   /** Called after a Category is deleted, so its Tasks leave the screen too. */
   onCategoryDeleted(categoryId: string): void;
 };
 
 /** The Category row: one column per Category, in order, then "+ Add category". */
-export function CategoryRow({ tasks, onAddTask, onCategoryDeleted }: Props) {
+export function CategoryRow({ tasks, onAddTask, onSetDone, onClearDone, onCategoryDeleted }: Props) {
   const { categories, createCategory, renameCategory, deleteCategory, moveCategory } = useCategories();
   const sensors = useDragSensors();
   // The Category waiting for "Delete <name> and its N tasks?" to be answered.
@@ -67,6 +69,8 @@ export function CategoryRow({ tasks, onAddTask, onCategoryDeleted }: Props) {
               category={category}
               tasks={tasks}
               onAddTask={(title) => onAddTask(category.id, title)}
+              onSetDone={onSetDone}
+              onClearDone={() => onClearDone(category.id)}
               onRename={(name) => renameCategory(category.id, name)}
               onDelete={() => requestDelete(category)}
             />
@@ -97,11 +101,13 @@ type ColumnProps = {
   category: Category;
   tasks: Task[];
   onAddTask(title: string): void;
+  onSetDone(taskId: string, done: boolean): void;
+  onClearDone(): void;
   onRename(name: string): void;
   onDelete(): void;
 };
 
-function CategoryColumn({ category, tasks, onAddTask, onRename, onDelete }: ColumnProps) {
+function CategoryColumn({ category, tasks, onAddTask, onSetDone, onClearDone, onRename, onDelete }: ColumnProps) {
   const place = { categoryId: category.id };
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id,
@@ -145,9 +151,9 @@ function CategoryColumn({ category, tasks, onAddTask, onRename, onDelete }: Colu
             </button>
           </h2>
         )}
-        <CategoryMenu categoryName={category.name} onDelete={onDelete} />
+        <CategoryMenu categoryName={category.name} onClearDone={onClearDone} onDelete={onDelete} />
       </div>
-      <TaskLines contents={columnContents(tasks, place)} onAdd={onAddTask} />
+      <TaskLines contents={columnContents(tasks, place)} onAdd={onAddTask} onSetDone={onSetDone} />
     </div>
   );
 }

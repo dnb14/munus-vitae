@@ -9,9 +9,10 @@ type Props = {
   today: CalendarDate;
   tasks: Task[];
   onAddTask(day: CalendarDate, title: string): void;
+  onSetDone(taskId: string, done: boolean): void;
 };
 
-export function DayRow({ start, count, today, tasks, onAddTask }: Props) {
+export function DayRow({ start, count, today, tasks, onAddTask, onSetDone }: Props) {
   const dates = dayRowDates(start, count);
 
   return (
@@ -32,7 +33,11 @@ export function DayRow({ start, count, today, tasks, onAddTask }: Props) {
             <h2 className="day-column__header" aria-current={isToday ? "date" : undefined}>
               {dayColumnLabel(date)}
             </h2>
-            <TaskLines contents={columnContents(tasks, place)} onAdd={(title) => onAddTask(date, title)} />
+            <TaskLines
+              contents={columnContents(tasks, place)}
+              onAdd={(title) => onAddTask(date, title)}
+              onSetDone={onSetDone}
+            />
           </div>
         );
       })}

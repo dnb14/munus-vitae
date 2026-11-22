@@ -87,7 +87,25 @@ export function createSupabaseBackend(url: string, publishableKey: string): Back
       const { error } = await supabase.from("tasks").insert({ ...toTaskRow(task), user_id: userId });
       if (error) throw error;
     },
+    async markTaskDone(id, doneAt) {
+      await updateTask(id, { done: true, done_at: doneAt });
+    },
+    async markTaskNotDone(id, position) {
+      await updateTask(id, { done: false, done_at: null, position });
+    },
+    async clearDoneTasks(categoryId) {
+      const { error } = await supabase.from("tasks").delete().eq("category_id", categoryId).eq("done", true);
+      if (error) throw error;
+    },
   };
+
+  async function updateTask(id: string, changes: Partial<TaskRow>) {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) throw error;
+  }
 
   async function updateCategory(id: string, changes: { name?: string; position?: string }) {
     const { error } = await supabase

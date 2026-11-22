@@ -22,6 +22,11 @@ export function isInPlace(task: Task, place: Place): boolean {
   return "day" in place ? task.day === place.day : task.categoryId === place.categoryId;
 }
 
+/** The place a Task is in. */
+export function placeOf(task: Task): Place {
+  return task.day !== null ? { day: task.day } : { categoryId: task.categoryId! };
+}
+
 /** The day and categoryId fields of a Task in this place. */
 export function placeFields(place: Place): Pick<Task, "day" | "categoryId"> {
   return "day" in place ? { day: place.day, categoryId: null } : { day: null, categoryId: place.categoryId };
@@ -44,7 +49,22 @@ export function columnContents(tasks: Task[], place: Place): { unfinished: Task[
   };
 }
 
-/** The ordering key for a new Task: right after the last unfinished Task in its place. */
+/**
+ * When a Task ticked now counts as Done: now, or just after the latest Done
+ * Task in its place if that is later (same millisecond, or a clock behind),
+ * so a newly ticked Task always lands at the bottom of its column.
+ */
+export function doneAtFor(tasks: Task[], place: Place, now: Date): string {
+  const { done } = columnContents(tasks, place);
+  const latest = done[done.length - 1]?.doneAt;
+  if (latest && Date.parse(latest) >= now.getTime()) return new Date(Date.parse(latest) + 1).toISOString();
+  return now.toISOString();
+}
+
+/**
+ * The ordering key for a new or unticked Task: right after the last
+ * unfinished Task in its place.
+ */
 export function newTaskPosition(tasks: Task[], place: Place): string {
   const { unfinished } = columnContents(tasks, place);
   return generateKeyBetween(unfinished[unfinished.length - 1]?.position ?? null, null);
@@ -65,8 +85,7 @@ export function categoryTaskCount(tasks: Task[], categoryId: string): number {
   return tasks.filter((task) => task.categoryId === categoryId).length;
 }
 
+/** Oldest first, comparing moments rather than text, since timestamps arrive in more than one format. */
 function byDoneAt(a: Task, b: Task): number {
-  const x = a.doneAt ?? "";
-  const y = b.doneAt ?? "";
-  return x < y ? -1 : x > y ? 1 : 0;
+  return Date.parse(a.doneAt ?? "") - Date.parse(b.doneAt ?? "") || 0;
 }

@@ -17,7 +17,7 @@ export function Board({ user }: { user: User }) {
   const [todayDate] = useState<CalendarDate>(today);
   const [dayRowStart, setDayRowStart] = useState<CalendarDate>(todayDate);
   const theme = useEffectiveTheme(settings?.theme ?? null);
-  const { tasks, createTask, forgetCategoryTasks } = useTasks();
+  const { tasks, createTask, setDone, clearDone, forgetCategoryTasks } = useTasks();
 
   return (
     <div className="board" style={{ "--line-height": `${LINE_HEIGHT}px` } as CSSProperties}>
@@ -42,6 +42,7 @@ export function Board({ user }: { user: User }) {
             today={todayDate}
             tasks={tasks}
             onAddTask={(day, title) => createTask({ day }, title)}
+            onSetDone={setDone}
           />
         )}
       </section>
@@ -50,6 +51,8 @@ export function Board({ user }: { user: User }) {
           <CategoryRow
             tasks={tasks}
             onAddTask={(categoryId, title) => createTask({ categoryId }, title)}
+            onSetDone={setDone}
+            onClearDone={clearDone}
             onCategoryDeleted={forgetCategoryTasks}
           />
         )}

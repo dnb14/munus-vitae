@@ -6,6 +6,8 @@ type Props = {
   /** The column's contents from the Board model. A new Task snaps in after the unfinished ones. */
   contents: { unfinished: Task[]; done: Task[] };
   onAdd(title: string): void;
+  /** Ticks (true) or unticks (false) a Task. */
+  onSetDone(taskId: string, done: boolean): void;
 };
 
 /**
@@ -13,7 +15,7 @@ type Props = {
  * the top; clicking any empty Line opens an input on the Line a new Task
  * snaps to. The column scrolls when full, always keeping one empty Line.
  */
-export function TaskLines({ contents: { unfinished, done }, onAdd }: Props) {
+export function TaskLines({ contents: { unfinished, done }, onAdd, onSetDone }: Props) {
   const [adding, setAdding] = useState(false);
   const [containerRef, height] = useHeight<HTMLDivElement>();
 
@@ -23,7 +25,7 @@ export function TaskLines({ contents: { unfinished, done }, onAdd }: Props) {
     <div className="lines" ref={containerRef}>
       <ol className="lines__tasks">
         {unfinished.map((task) => (
-          <TaskLine key={task.id} task={task} />
+          <TaskLine key={task.id} task={task} onSetDone={onSetDone} />
         ))}
         {adding && (
           <li className="line" role="presentation">
@@ -31,7 +33,7 @@ export function TaskLines({ contents: { unfinished, done }, onAdd }: Props) {
           </li>
         )}
         {done.map((task) => (
-          <TaskLine key={task.id} task={task} />
+          <TaskLine key={task.id} task={task} onSetDone={onSetDone} />
         ))}
       </ol>
       {Array.from({ length: emptyLines }, (_, i) => (
@@ -49,8 +51,23 @@ export function TaskLines({ contents: { unfinished, done }, onAdd }: Props) {
   );
 }
 
-function TaskLine({ task }: { task: Task }) {
-  return <li className="line task-line">{task.title}</li>;
+/**
+ * One Task on its Line. The checkbox shows on hover or keyboard focus; a Done
+ * Task is crossed out and greyed all the time.
+ */
+function TaskLine({ task, onSetDone }: { task: Task; onSetDone(taskId: string, done: boolean): void }) {
+  return (
+    <li className={["line", "task-line", task.done && "task-line--done"].filter(Boolean).join(" ")}>
+      <input
+        type="checkbox"
+        className="task-line__checkbox"
+        aria-label={`Done: ${task.title}`}
+        checked={task.done}
+        onChange={(event) => onSetDone(task.id, event.target.checked)}
+      />
+      <span className="task-line__title">{task.title}</span>
+    </li>
+  );
 }
 
 /** Enter saves and stays open for the next Task; Escape, or Enter or leaving with nothing typed, closes it. */

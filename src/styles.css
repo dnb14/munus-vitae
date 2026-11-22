@@ -362,9 +362,37 @@ body {
 
 .task-line {
   min-width: 0;
+}
+
+.task-line__title {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The checkbox takes no room until the Task is hovered or focused. */
+.task-line__checkbox {
+  flex: none;
+  width: 0;
+  height: 14px;
+  margin: 0;
+  opacity: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.task-line:hover .task-line__checkbox,
+.task-line:focus-within .task-line__checkbox {
+  width: 14px;
+  margin-right: 8px;
+  opacity: 1;
+}
+
+/* Done Tasks are crossed out and greyed, hovered or not. */
+.task-line--done .task-line__title {
+  color: var(--text-muted);
+  text-decoration: line-through;
 }
 
 .line__input {

@@ -78,6 +78,12 @@ export type Backend = {
   getTasks(): Promise<Task[]>;
   /** Creates a Task. The caller picks the id and position, so the screen can show it straight away. */
   createTask(task: Task): Promise<void>;
+  /** Marks a Task Done at the given ISO timestamp. The caller picks it, so the screen can order Done Tasks straight away. */
+  markTaskDone(id: string, doneAt: string): Promise<void>;
+  /** Marks a Done Task unfinished again, clearing its doneAt and giving it a new position. */
+  markTaskNotDone(id: string, position: string): Promise<void>;
+  /** Deletes the Done Tasks in a Category. Its unfinished Tasks stay. */
+  clearDoneTasks(categoryId: string): Promise<void>;
 };
 
 /** Sorts by ordering key. Keys compare by code unit, never by locale. */
