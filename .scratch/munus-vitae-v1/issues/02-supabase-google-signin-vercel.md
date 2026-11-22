@@ -4,11 +4,11 @@
 
 **Blocked by:** 01: Walking skeleton.
 
-**Status:** ready-for-human
+**Status:** done
 
-- [ ] Supabase project created; Google provider enabled with an OAuth client whose redirect URLs include localhost and the Vercel URL
-- [ ] Vercel project created and connected to the GitHub repo, with the Supabase URL and anon key set as environment variables
-- [ ] Database migrations live in the repo and can be applied to a fresh Supabase project
-- [ ] The settings table exists (day_count 5–7 defaulting to 7, theme light/dark/null), with row-level security so only the owner can read or write their row
-- [ ] The Supabase backend implements sign in with Google, sign out and current session; the app uses it outside tests
-- [ ] Checked by hand: on the deployed URL, signing in with Google shows the page, reloading keeps me signed in, and Sign out works
+- [x] Supabase project created; Google provider enabled with an OAuth client whose redirect URLs include localhost and the Vercel URL
+- [x] Vercel project created and connected to the GitHub repo, with the Supabase URL and anon key set as environment variables
+- [x] Database migrations live in the repo and can be applied to a fresh Supabase project
+- [x] The settings table exists (day_count 5–7 defaulting to 7, theme light/dark/null), with row-level security so only the owner can read or write their row
+- [x] The Supabase backend implements sign in with Google, sign out and current session; the app uses it outside tests
+- [x] Checked by hand: on the deployed URL, signing in with Google shows the page, reloading keeps me signed in, and Sign out works
