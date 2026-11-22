@@ -17,11 +17,9 @@
   background: var(--bg);
 }
 
+/* Dark: when the system asks for it and no theme is saved, or when "dark" is saved. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --accent: #fd8a8a;
-    --accent-contrast: #2b1010;
-
+  :root:not([data-theme="light"]) {
     --bg: #161616;
     --surface: #1e1e1e;
     --text: #ececec;
@@ -30,6 +28,16 @@
 
     color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #161616;
+  --surface: #1e1e1e;
+  --text: #ececec;
+  --text-muted: #9a9a9a;
+  --line: #2e2e2e;
+
+  color-scheme: dark;
 }
 
 *,
@@ -130,4 +138,59 @@ body {
 
 .day-row {
   border-bottom: 1px solid var(--line);
+}
+
+.button--icon {
+  padding: 2px 5px;
+  line-height: 1;
+}
+
+.button--toggle[aria-pressed="true"] {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+
+.top-bar__group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.top-bar__group + .top-bar__group,
+.top-bar__group + .button {
+  margin-left: 8px;
+}
+
+.day-row__columns {
+  display: grid;
+  height: 100%;
+}
+
+.day-column {
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+.day-column:last-child {
+  border-right: none;
+}
+
+.day-column__header {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.day-column--today .day-column__header {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+
+.day-column--past {
+  opacity: 0.45;
 }

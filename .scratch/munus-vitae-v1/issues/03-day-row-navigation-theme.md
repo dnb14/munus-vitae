@@ -4,12 +4,12 @@
 
 **Blocked by:** 02: Supabase, Google sign-in and Vercel deploy.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The Backend interface can load and update Settings (day_count, theme), in both the in-memory and Supabase backends
-- [ ] The Day row shows day_count consecutive Day columns starting at Today on load; Today is the device's local date
-- [ ] Headers show weekday and date; Today highlighted with the accent; Past days dimmed
-- [ ] ◀/▶ move the start by 1 day, «/» by 7 days whatever the day count, and Today resets it
-- [ ] Clicking 5/6/7 changes the number of Day columns straight away and saves it; reloading keeps it
-- [ ] The theme follows the system while the saved theme is null; the toggle switches light/dark and saves the choice, which then wins over the system
-- [ ] App-level tests with a faked clock cover: opening at Today, ±1, ±7, Today reset, 5/6/7 switching and saving, header text, and the theme toggle being saved
+- [x] The Backend interface can load and update Settings (day_count, theme), in both the in-memory and Supabase backends
+- [x] The Day row shows day_count consecutive Day columns starting at Today on load; Today is the device's local date
+- [x] Headers show weekday and date; Today highlighted with the accent; Past days dimmed
+- [x] ◀/▶ move the start by 1 day, «/» by 7 days whatever the day count, and Today resets it
+- [x] Clicking 5/6/7 changes the number of Day columns straight away and saves it; reloading keeps it
+- [x] The theme follows the system while the saved theme is null; the toggle switches light/dark and saves the choice, which then wins over the system
+- [x] App-level tests with a faked clock cover: opening at Today, ±1, ±7, Today reset, 5/6/7 switching and saving, header text, and the theme toggle being saved

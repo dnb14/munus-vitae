@@ -1,13 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { App } from "./App";
+import { screen } from "@testing-library/react";
 import { createInMemoryBackend } from "./backend/inMemoryBackend";
-
-function renderApp(backend = createInMemoryBackend()) {
-  const user = userEvent.setup();
-  render(<App backend={backend} />);
-  return { user, backend };
-}
+import { renderApp } from "./test/renderApp";
 
 describe("signing in and out", () => {
   it("shows the sign-in screen when signed out", async () => {
@@ -26,7 +19,7 @@ describe("signing in and out", () => {
 
     expect(await screen.findByRole("banner")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Ada Lovelace" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Day row" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Day row" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Category row" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Sign out" }));
