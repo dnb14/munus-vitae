@@ -21,6 +21,7 @@ export function DayRow({ start, count, today, tasks, onAddTask, taskActions }: P
         const isToday = date === today;
         const past = isPast(date, today);
         const place = { day: date };
+        const label = dayColumnLabel(date);
         return (
           <div
             key={date}
@@ -30,9 +31,14 @@ export function DayRow({ start, count, today, tasks, onAddTask, taskActions }: P
             role="group"
             aria-label={dayColumnFullLabel(date)}
           >
-            <h2 className="day-column__header" aria-current={isToday ? "date" : undefined}>
-              {dayColumnLabel(date)}
-            </h2>
+            <div className="day-column__header">
+              {/* Reads "Mon 23"; shown as a big "23" then a small "MON". */}
+              <h2 className="day-column__date" aria-current={isToday ? "date" : undefined}>
+                <span className="day-column__weekday">{label.weekday}</span>{" "}
+                <span className="day-column__day">{label.day}</span>
+              </h2>
+              {isToday && <span className="day-column__today">Today</span>}
+            </div>
             <TaskLines
               place={place}
               contents={columnContents(tasks, place)}

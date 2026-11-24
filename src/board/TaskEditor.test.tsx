@@ -234,7 +234,7 @@ describe("Tags", () => {
 });
 
 describe("filtering by Tag", () => {
-  it("dims every Task without the Tag in both rows, shows the Tag in the top bar, and ✕ clears it", async () => {
+  it("dims every Task without the Tag in both rows, shows the Tag in the bottom bar, and ✕ clears it", async () => {
     const { user } = await renderSignedIn({
       categories: [{ name: "School" }],
       tasks: [
@@ -244,20 +244,20 @@ describe("filtering by Tag", () => {
         { title: "Read chapter 3", category: "School", tags: ["reading"] },
       ],
     });
-    const topBar = screen.getByRole("banner");
-    expect(within(topBar).queryByRole("group", { name: "Tag filter" })).not.toBeInTheDocument();
+    const bottomBar = screen.getByRole("contentinfo");
+    expect(within(bottomBar).queryByRole("group", { name: "Tag filter" })).not.toBeInTheDocument();
 
     await user.click(within(taskLine("Finish problem set")).getByRole("button", { name: "Filter by tag homework" }));
 
-    expect(within(within(topBar).getByRole("group", { name: "Tag filter" })).getByText("homework")).toBeInTheDocument();
+    expect(within(within(bottomBar).getByRole("group", { name: "Tag filter" })).getByText("#homework")).toBeInTheDocument();
     expect(taskLine("Revise for test")).not.toHaveClass("task-line--dimmed");
     expect(taskLine("Finish problem set")).not.toHaveClass("task-line--dimmed");
     expect(taskLine("Call mum")).toHaveClass("task-line--dimmed");
     expect(taskLine("Read chapter 3")).toHaveClass("task-line--dimmed");
 
-    await user.click(within(topBar).getByRole("button", { name: "Clear tag filter" }));
+    await user.click(within(bottomBar).getByRole("button", { name: "Clear tag filter" }));
 
-    expect(within(topBar).queryByRole("group", { name: "Tag filter" })).not.toBeInTheDocument();
+    expect(within(bottomBar).queryByRole("group", { name: "Tag filter" })).not.toBeInTheDocument();
     for (const title of ["Revise for test", "Call mum", "Finish problem set", "Read chapter 3"]) {
       expect(taskLine(title)).not.toHaveClass("task-line--dimmed");
     }
@@ -275,7 +275,7 @@ describe("filtering by Tag", () => {
     await user.click(screen.getByRole("button", { name: "Filter by tag maths" }));
     await user.click(screen.getByRole("button", { name: "Filter by tag reading" }));
 
-    expect(within(screen.getByRole("group", { name: "Tag filter" })).getByText("reading")).toBeInTheDocument();
+    expect(within(screen.getByRole("group", { name: "Tag filter" })).getByText("#reading")).toBeInTheDocument();
     expect(taskLine("Read chapter 3")).not.toHaveClass("task-line--dimmed");
     expect(taskLine("Finish problem set")).toHaveClass("task-line--dimmed");
   });

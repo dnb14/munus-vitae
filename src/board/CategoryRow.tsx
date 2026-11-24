@@ -112,18 +112,17 @@ function CategoryColumn({ category, tasks, onAddTask, taskActions, onClearDone, 
       role="group"
       aria-label={category.name}
     >
-      <div className="category-column__header">
+      {/* The whole header drags with a pointer. For the keyboard there is an
+          invisible handle that outlines the header while it has focus. */}
+      <div className="category-column__header" {...listeners}>
         <button
           ref={setActivatorNodeRef}
           type="button"
-          className="button button--quiet button--icon category-column__handle"
+          className="category-column__handle"
           {...attributes}
-          {...listeners}
           aria-label={`Move ${category.name}`}
           title="Drag to reorder"
-        >
-          <span aria-hidden="true">⠿</span>
-        </button>
+        />
         {renaming ? (
           <NameInput
             label="Category name"

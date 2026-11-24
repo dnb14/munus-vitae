@@ -27,11 +27,15 @@ export function addDays(date: CalendarDate, days: number): CalendarDate {
   return toCalendarDate(local);
 }
 
-/** Header text for a Day column, e.g. "Mon 23". */
-export function dayColumnLabel(date: CalendarDate): string {
+/** The two parts of a Day column's header, e.g. { weekday: "Mon", day: 23 }: read as "Mon 23". */
+export function dayColumnLabel(date: CalendarDate): { weekday: string; day: number } {
   const local = toLocalDate(date);
-  const weekday = local.toLocaleDateString("en-US", { weekday: "short" });
-  return `${weekday} ${local.getDate()}`;
+  return { weekday: local.toLocaleDateString("en-US", { weekday: "short" }), day: local.getDate() };
+}
+
+/** Month and year, e.g. "November 2026". */
+export function monthYearLabel(date: CalendarDate): string {
+  return toLocalDate(date).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 }
 
 /** Full date for screen readers, e.g. "Monday, 23 November 2026". */

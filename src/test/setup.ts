@@ -7,4 +7,5 @@ installFakeLayout();
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "/");
 });

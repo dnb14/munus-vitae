@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Backend, User } from "./backend/backend";
 import { BackendProvider } from "./backend/BackendContext";
 import { Board } from "./board/Board";
+import { Account } from "./auth/Account";
 import { SignIn } from "./auth/SignIn";
 
 type SessionState = { status: "loading" } | { status: "ready"; user: User | null };
@@ -27,7 +28,18 @@ export function App({ backend }: { backend: Backend }) {
 
   return (
     <BackendProvider backend={backend}>
-      {session.user ? <Board user={session.user} /> : <SignIn />}
+      {isAccountPage() ? (
+        <Account user={session.user} />
+      ) : session.user ? (
+        <Board />
+      ) : (
+        <SignIn />
+      )}
     </BackendProvider>
   );
+}
+
+/** Signing in and out lives at its own address, /account, typed into the address bar. */
+function isAccountPage(): boolean {
+  return window.location.pathname.replace(/\/+$/, "") === "/account";
 }

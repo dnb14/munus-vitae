@@ -1,43 +1,87 @@
+/* ---------- Tokens ----------
+   Calm neutral: near-white, cool greys, hairlines, and one indigo accent used
+   only where it means something (Today, focus, selected). */
 :root {
-  --accent: #fd8a8a;
-  --accent-contrast: #2b1010;
-  /* Overdue warnings: a deeper red than the accent, so they don't read as highlights. */
-  --overdue: #c62828;
+  --accent: #5b5bd6;
+  --accent-hover: #4f4fc4;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgb(91 91 214 / 0.1);
+  /* Overdue warnings: a red that can't be mistaken for the accent. */
+  --overdue: #d93f3f;
 
-  --bg: #fbfaf8;
+  --bg: #fcfcfd;
   --surface: #ffffff;
-  --text: #1f1f1f;
-  --text-muted: #6b6b6b;
-  --line: #e7e4df;
+  --surface-sunken: #f6f6f8;
+  --text: #1c1c21;
+  --text-muted: #6f6f7a;
+  --text-faint: #a1a1ab;
+  --line: #eeeef1;
+  --line-strong: #dedee3;
+  --hover: rgb(20 20 40 / 0.05);
+  --category-bg: #f3f3f5;
+  --category-hover: #e6e6ec;
+  --shadow: 0 1px 2px rgb(16 16 32 / 0.04), 0 8px 24px rgb(16 16 32 / 0.08);
 
-  --top-bar-height: 32px;
+  --bar-height: 44px;
+  /* Headings: Outfit, a geometric sans, beside Inter for everything else. */
+  --font-heading: "Outfit Variable", Outfit, "Inter Variable", system-ui, sans-serif;
+  --radius: 8px;
 
   color-scheme: light;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter Variable", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv11", "ss01";
   font-size: 14px;
+  line-height: 1.4;
   color: var(--text);
   background: var(--bg);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Dark: when the system asks for it and no theme is saved, or when "dark" is saved. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #161616;
-    --surface: #1e1e1e;
-    --text: #ececec;
-    --text-muted: #9a9a9a;
-    --line: #2e2e2e;
+    --accent: #8b8bf0;
+    --accent-hover: #9d9df3;
+    --accent-contrast: #111113;
+    --accent-soft: rgb(139 139 240 / 0.14);
+    --overdue: #f06b6b;
+
+    --bg: #111113;
+    --surface: #18181b;
+    --surface-sunken: #141416;
+    --text: #ededf0;
+    --text-muted: #9b9ba6;
+    --text-faint: #62626c;
+    --line: #222226;
+    --line-strong: #2f2f35;
+    --hover: rgb(255 255 255 / 0.06);
+  --category-bg: #161619;
+  --category-hover: #1d1d21;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.4);
 
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #161616;
-  --surface: #1e1e1e;
-  --text: #ececec;
-  --text-muted: #9a9a9a;
-  --line: #2e2e2e;
+  --accent: #8b8bf0;
+  --accent-hover: #9d9df3;
+  --accent-contrast: #111113;
+  --accent-soft: rgb(139 139 240 / 0.14);
+  --overdue: #f06b6b;
+
+  --bg: #111113;
+  --surface: #18181b;
+  --surface-sunken: #141416;
+  --text: #ededf0;
+  --text-muted: #9b9ba6;
+  --text-faint: #62626c;
+  --line: #222226;
+  --line-strong: #2f2f35;
+  --hover: rgb(255 255 255 / 0.06);
+  --category-bg: #161619;
+  --category-hover: #1d1d21;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.4);
 
   color-scheme: dark;
 }
@@ -59,19 +103,42 @@ body {
   background: var(--bg);
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.icon {
+  display: block;
+  flex: none;
+}
+
+.top-bar__spacer {
+  flex: 1;
+}
+
+/* ---------- Buttons ---------- */
+
 .button {
   font: inherit;
+  font-weight: 500;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  padding: 2px 8px;
+  padding: 4px 10px;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
 }
 
 .button--accent {
   background: var(--accent);
   color: var(--accent-contrast);
   padding: 8px 16px;
-  font-weight: 600;
+}
+
+.button--accent:hover {
+  background: var(--accent-hover);
 }
 
 .button--quiet {
@@ -81,7 +148,18 @@ body {
 
 .button--quiet:hover {
   color: var(--text);
+  background: var(--hover);
 }
+
+.button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  line-height: 1;
+}
+
+/* ---------- Sign-in ---------- */
 
 .sign-in {
   height: 100%;
@@ -89,52 +167,53 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 12px;
 }
 
 .sign-in__title {
-  font-weight: 500;
-  margin: 0;
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 
-/* Every column, Day or Category, is the same fixed width: the board's width split by the
-   selected day count (--day-count, set on .board). Nothing grows with the text inside it,
-   and the rows keep their 60/40 split however many Tasks they hold. */
-.board {
-  height: 100%;
-  display: grid;
-  grid-template-rows: var(--top-bar-height) minmax(0, 3fr) minmax(0, 2fr);
-  container-type: inline-size;
-  --column-width: calc(100cqw / var(--day-count));
-}
-
-.top-bar {
+.account {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--line);
-  font-size: 12px;
+  margin-bottom: 12px;
 }
 
-.top-bar__spacer {
-  flex: 1;
+.account__name {
+  font-weight: 500;
 }
 
-.avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+.account__back {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
 }
 
-.avatar--initial {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  font-size: 11px;
-  font-weight: 600;
+.account__back:hover {
+  color: var(--text);
+}
+
+.sign-in__tagline {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+}
+
+/* ---------- Board layout ---------- */
+
+/* Every column, Day or Category, is the same fixed width: the board's width split by the
+   selected day count (--day-count, set on .board). Nothing grows with the text inside it,
+   and the rows keep their 60/40 split above the bottom bar however many Tasks they hold. */
+.board {
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 3fr) minmax(0, 2fr) var(--bar-height);
+  container-type: inline-size;
+  --column-width: calc(100cqw / var(--day-count));
 }
 
 .day-row,
@@ -144,35 +223,211 @@ body {
   overflow: hidden;
 }
 
+/* The two rows are parted by a stronger line and a little space. */
+.day-row {
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.category-row {
+  margin-top: 8px;
+  border-top: 1px solid var(--line-strong);
+  background: var(--category-bg);
+}
+
 /* More Categories than fit: the Category row scrolls sideways, never down. */
 .category-row {
   overflow-x: auto;
 }
 
-.day-row {
-  border-bottom: 1px solid var(--line);
+/* ---------- Bars ---------- */
+
+.bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  background: var(--bg);
+  font-size: 13px;
 }
 
-.button--icon {
-  padding: 2px 5px;
-  line-height: 1;
+.bar--bottom {
+  border-top: 1px solid var(--line);
 }
 
-.button--toggle[aria-pressed="true"] {
-  color: var(--accent-contrast);
-  background: var(--accent);
+.bar__start,
+.bar__end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
-.top-bar__group {
+.bar__end {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bar__centre {
+  display: flex;
+  justify-content: center;
+}
+
+.bar__month {
+  min-width: 132px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.bar__group {
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
-.top-bar__group + .top-bar__group,
-.top-bar__group + .button {
-  margin-left: 8px;
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.logo__mark {
+  display: block;
+  flex: none;
+}
+
+.logo__wordmark {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* Search has no bar: / or Ctrl/⌘+K opens this box in the middle of the screen. */
+.search {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(480px, calc(100vw - 32px));
+  height: 48px;
+  padding: 0 12px 0 14px;
+  color: var(--text-faint);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  font-size: 15px;
+}
+
+.search:focus-within {
+  border-color: var(--accent);
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  appearance: none;
+  color: var(--text);
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+}
+
+.search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search__input::placeholder {
+  color: var(--text-faint);
+}
+
+.search__hint {
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  color: var(--text-faint);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.segmented__option {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 26px;
+  padding: 2px 8px;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.segmented__option:hover {
+  color: var(--text);
+}
+
+.segmented__option[aria-pressed="true"] {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(16 16 32 / 0.1);
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.avatar--initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 500;
+}
+
+.active-tag__clear {
+  font: inherit;
+  font-size: 10px;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0 3px;
+  cursor: pointer;
+}
+
+/* ---------- Columns ---------- */
 
 .day-row__columns {
   display: grid;
@@ -180,33 +435,79 @@ body {
   overflow: hidden;
 }
 
+/* No vertical rules: columns are set apart by space alone. Every horizontal
+   rule (header underline and Lines) stops short of the column's edges. */
 .day-column {
   min-width: 0;
-  border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
 }
 
-.day-column:last-child {
-  border-right: none;
+/* Day and Category headers share a height and inset; Category headers drop the underline below. */
+.day-column__header,
+.category-column__header {
+  flex: none;
+  height: 48px;
+  margin: 0 12px;
+  border-bottom: 1px solid var(--line-strong);
 }
 
 .day-column__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+/* The heading reads "Mon 23" but shows a big "23" then a small "MON". */
+.day-column__date {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 6px;
   margin: 0;
-  padding: 6px 10px;
-  font-size: 12px;
+  font-weight: 400;
+}
+
+.day-column__day {
+  font-size: 22px;
   font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-column__weekday {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-muted);
-  border-bottom: 1px solid var(--line);
 }
 
-.day-column--today .day-column__header {
-  color: var(--accent-contrast);
-  background: var(--accent);
+.day-column__today {
+  margin-left: auto;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
 }
 
-.day-column--past {
-  opacity: 0.45;
+.day-column--today .day-column__day,
+.day-column--today .day-column__weekday {
+  color: var(--accent);
+}
+
+/* Past days stay readable: a greyed header and faintly tinted Lines. */
+.day-column--past .day-column__day,
+.day-column--past .day-column__weekday {
+  color: var(--text-faint);
+}
+
+.day-column--past .lines {
+  background: var(--surface-sunken);
 }
 
 /* Category row: fixed-width columns side by side; the row scrolls sideways when they don't fit. */
@@ -217,49 +518,123 @@ body {
   min-width: 100%;
 }
 
+/* The Category row is a shade greyer than the Day row; hovering a Category shades its whole column. */
 .category-column {
   flex: 0 0 var(--column-width);
   min-width: 0;
-  border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: var(--category-bg);
+  transition: background-color 0.12s;
+}
+
+.category-column:not(.category-column--add):hover,
+.category-column--dragging {
+  background: var(--category-hover);
+}
+
+/* Lines in the Category row are ruled a little darker, to show on the grey. */
+.category-column .line,
+.category-column .line--empty {
+  border-color: var(--line-strong);
+}
+
+/* Tasks already sit on a shaded column, so they don't shade again on hover. */
+.category-column .task-line:hover {
+  background: none;
 }
 
 .category-column--dragging {
   position: relative;
   z-index: 1;
-  opacity: 0.85;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+  opacity: 0.9;
+  box-shadow: var(--shadow);
 }
 
-.category-column--add {
-  border-right: none;
-}
-
+/* No underline: space above and below sets the name apart instead. */
 .category-column__header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
-  min-height: 29px;
-  padding: 2px 4px;
-  border-bottom: 1px solid var(--line);
+  margin: 14px 12px 10px;
+  border-bottom: none;
+}
+
+/* The name lines up with the Tasks below it. A small vertical ⋮ sits just to
+   its left, in the column's margin, shown while the column is hovered or focused. */
+.category-column__header {
+  cursor: grab;
+  touch-action: none;
 }
 
 .category-column__title {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 12px;
+  padding: 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
   font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.category-column__header .category-menu {
+  position: absolute;
+  left: -12px;
+}
+
+.category-column__header .category-menu > .button {
+  padding: 3px 0;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.category-column__header .category-menu .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.category-column:hover .category-menu > .button,
+.category-column__header:focus-within .category-menu > .button,
+.category-menu > .button[aria-expanded="true"] {
+  opacity: 1;
+}
+
+.category-column__header .category-menu > .button:hover {
+  color: var(--text);
+}
+
+.category-column__header .category-menu__items {
+  left: 0;
+  right: auto;
+}
+
+/* The keyboard drag handle: takes no space and shows nothing; while it has
+   keyboard focus, the whole header is outlined instead. */
+.category-column__handle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+  border: none;
+}
+
+.category-column__header:has(.category-column__handle:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .category-column__name {
   font: inherit;
-  color: var(--text-muted);
+  color: var(--text);
   background: none;
   border: none;
-  padding: 2px 4px;
+  border-radius: 4px;
+  padding: 2px;
   width: 100%;
   text-align: left;
   cursor: text;
@@ -268,34 +643,37 @@ body {
   white-space: nowrap;
 }
 
-.category-column__name:hover {
-  color: var(--text);
-}
-
-.category-column__handle {
-  cursor: grab;
-  touch-action: none;
-}
-
 .category-column__add {
-  margin: 4px;
-  padding: 4px 8px;
+  margin: 10px 8px;
+  padding: 6px 10px;
   text-align: left;
+  border: 1px dashed var(--line-strong);
 }
 
+.category-column__add:hover {
+  border-color: var(--text-faint);
+}
+
+/* Renaming edits the name in place: no box, just the text and an accent caret. */
 .name-input {
   flex: 1;
   min-width: 0;
+  margin: 0;
   font: inherit;
-  font-size: 12px;
+  font-family: var(--font-heading);
+  font-size: 22px;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: left;
   color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 3px;
-  padding: 2px 4px;
+  caret-color: var(--accent);
+  background: none;
+  border: none;
+  padding: 2px;
   outline: none;
 }
+
+/* ---------- Menus ---------- */
 
 .category-menu {
   position: relative;
@@ -304,40 +682,41 @@ body {
 .category-menu__items {
   position: absolute;
   right: 0;
-  top: 100%;
+  top: calc(100% + 4px);
   z-index: 10;
-  min-width: 120px;
+  min-width: 140px;
   padding: 4px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 4px;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .category-menu__item {
   display: block;
   width: 100%;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   text-align: left;
   color: var(--text);
   background: none;
   border: none;
-  border-radius: 3px;
-  padding: 4px 8px;
+  border-radius: 5px;
+  padding: 6px 8px;
   cursor: pointer;
 }
 
 .category-menu__item:hover,
 .category-menu__item:focus-visible {
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--hover);
   outline: none;
 }
 
-/* Lines: every column body is ruled like notebook paper. --line-height is set from LINE_HEIGHT on .board. */
+/* ---------- Lines ----------
+   Every column body is ruled like notebook paper. --line-height is set from LINE_HEIGHT on .board. */
 .lines {
   flex: 1;
+  font-size: 13px;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
@@ -356,12 +735,12 @@ body {
   display: flex;
   align-items: center;
   height: var(--line-height);
-  padding: 0 10px;
+  margin: 0 12px;
+  padding: 0 2px;
   border-bottom: 1px solid var(--line);
 }
 
 .line--empty {
-  width: 100%;
   font: inherit;
   background: none;
   border-width: 0 0 1px;
@@ -379,14 +758,29 @@ body {
   outline-offset: -2px;
 }
 
-.task-line {
+.line__input {
+  width: 100%;
   min-width: 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  padding: 0;
+  outline: none;
+  caret-color: var(--accent);
 }
+
+/* ---------- Task lines ---------- */
 
 .task-line {
   position: relative;
+  min-width: 0;
   gap: 6px;
   transition: opacity 0.15s;
+}
+
+.task-line:hover {
+  background: var(--hover);
 }
 
 .task-line__title {
@@ -407,6 +801,7 @@ body {
 .task-line__title:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+  border-radius: 2px;
 }
 
 /* A Tag filter is on and this Task doesn't have the Tag. */
@@ -417,17 +812,14 @@ body {
 .deadline-badge {
   flex: none;
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
-  padding: 3px 5px;
-  border-radius: 3px;
   color: var(--text-muted);
-  border: 1px solid var(--line);
 }
 
 .deadline-badge--overdue {
-  color: #fff;
-  background: var(--overdue);
-  border-color: var(--overdue);
+  color: var(--overdue);
+  font-weight: 600;
 }
 
 .tag-chip {
@@ -442,14 +834,14 @@ body {
   border: none;
   border-radius: 999px;
   color: var(--text-muted);
-  background: var(--line);
+  background: var(--surface-sunken);
   cursor: pointer;
 }
 
 .tag-chip:hover,
 .tag-chip[aria-pressed="true"] {
-  color: var(--accent-contrast);
-  background: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .tag-chip--editable {
@@ -458,7 +850,7 @@ body {
 
 .tag-chip--editable:hover {
   color: var(--text-muted);
-  background: var(--line);
+  background: var(--surface-sunken);
 }
 
 .tag-chip__remove {
@@ -471,41 +863,37 @@ body {
   cursor: pointer;
 }
 
-.active-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 8px;
-  padding: 1px 4px 1px 8px;
-  border-radius: 999px;
-  color: var(--accent-contrast);
-  background: var(--accent);
-}
-
-.active-tag__clear {
-  font: inherit;
-  font-size: 10px;
-  color: inherit;
-  background: none;
-  border: none;
-  padding: 0 2px;
-  cursor: pointer;
-}
-
-/* The checkbox takes no room until the Task is hovered or focused. */
+/* A round checkbox that fills with the accent when Done. It takes no room
+   until the Task is hovered or focused. */
 .task-line__checkbox {
+  appearance: none;
   flex: none;
   width: 0;
-  height: 14px;
+  height: 16px;
   margin: 0;
   opacity: 0;
-  accent-color: var(--accent);
+  border: 1.5px solid var(--text-faint);
+  border-radius: 50%;
+  background: var(--surface) center / 10px 10px no-repeat;
   cursor: pointer;
+  transition:
+    opacity 0.12s,
+    border-color 0.12s;
+}
+
+.task-line__checkbox:hover {
+  border-color: var(--accent);
+}
+
+.task-line__checkbox:checked {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5.2 4.1 7.3 8 3' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .task-line:hover .task-line__checkbox,
 .task-line:focus-within .task-line__checkbox {
-  width: 14px;
+  width: 16px;
   margin-left: 2px;
   opacity: 1;
 }
@@ -535,7 +923,8 @@ body {
 
 .task-line--overlay {
   background: var(--surface);
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
   cursor: grabbing;
   white-space: nowrap;
   overflow: hidden;
@@ -543,20 +932,11 @@ body {
 
 /* Done Tasks are crossed out and greyed, hovered or not. */
 .task-line--done .task-line__title {
-  color: var(--text-muted);
+  color: var(--text-faint);
   text-decoration: line-through;
 }
 
-.line__input {
-  width: 100%;
-  min-width: 0;
-  font: inherit;
-  color: var(--text);
-  background: none;
-  border: none;
-  padding: 0;
-  outline: none;
-}
+/* ---------- Dialogs ---------- */
 
 .dialog-backdrop {
   position: fixed;
@@ -565,64 +945,70 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(0 0 0 / 0.3);
+  background: rgb(10 10 20 / 0.28);
+  backdrop-filter: blur(2px);
 }
 
 .dialog {
-  min-width: 280px;
-  max-width: 420px;
-  padding: 16px;
+  min-width: 300px;
+  max-width: 440px;
+  padding: 20px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 6px;
-  box-shadow: 0 8px 32px rgb(0 0 0 / 0.2);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
 }
 
 .dialog__question {
-  margin: 0 0 16px;
+  margin: 0 0 20px;
+  font-weight: 500;
 }
 
 .dialog__actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 8px;
 }
 
 .dialog__confirm {
-  padding: 4px 12px;
+  padding: 6px 14px;
 }
 
 .task-editor {
-  width: 360px;
+  width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .task-editor__field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .task-editor__label {
   font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .task-editor__input {
   font: inherit;
   color: var(--text);
-  background: var(--bg);
+  background: var(--surface-sunken);
   border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 4px 6px;
+  border-radius: 6px;
+  padding: 6px 8px;
 }
 
 .task-editor__input:focus {
   outline: none;
   border-color: var(--accent);
+  background: var(--surface);
 }
 
 .task-editor__notes {
@@ -655,17 +1041,18 @@ body {
 /* "Couldn't save": a small notice at the bottom centre, above everything else. */
 .save-failed {
   position: fixed;
-  bottom: 16px;
+  bottom: calc(var(--bar-height) + 16px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 6px 6px 12px;
+  padding: 8px 8px 8px 14px;
   background: var(--surface);
   color: var(--text);
-  border: 1px solid var(--overdue);
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--overdue);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }

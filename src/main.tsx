@@ -4,6 +4,8 @@ import { App } from "./App";
 import type { Backend } from "./backend/backend";
 import { createInMemoryBackend } from "./backend/inMemoryBackend";
 import { createSupabaseBackend } from "./backend/supabaseBackend";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/outfit";
 import "./styles.css";
 
 function chooseBackend(): Backend {

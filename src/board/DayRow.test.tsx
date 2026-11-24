@@ -26,6 +26,37 @@ describe("Day row", () => {
     expect(screen.getByRole("heading", { name: "Tue 24" })).not.toHaveAttribute("aria-current");
   });
 
+  it("labels Today's column, and only Today's", async () => {
+    await renderSignedIn();
+
+    const today = screen.getByRole("group", { name: "Monday, 23 November 2026" });
+    expect(within(today).getByText("Today")).toBeInTheDocument();
+    const tomorrow = screen.getByRole("group", { name: "Tuesday, 24 November 2026" });
+    expect(within(tomorrow).queryByText("Today")).not.toBeInTheDocument();
+  });
+
+  it("shows the month and year of the Day row's first day in the bottom bar", async () => {
+    const { user } = await renderSignedIn({ settings: { dayCount: 5 } });
+    const bottomBar = screen.getByRole("contentinfo");
+
+    expect(within(bottomBar).getByText("November 2026")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Forward 7 days" }));
+    await user.click(screen.getByRole("button", { name: "Forward 1 day" }));
+    expect(within(bottomBar).getByText("December 2026")).toBeInTheDocument();
+  });
+
+  it("has no top bar: the logo and navigation are in the bottom bar", async () => {
+    await renderSignedIn();
+    const bottomBar = screen.getByRole("contentinfo");
+
+    expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+    expect(within(bottomBar).getByRole("img", { name: "Munus Vitae" })).toBeInTheDocument();
+    expect(within(bottomBar).getByRole("button", { name: "Today" })).toBeInTheDocument();
+    expect(within(bottomBar).getByRole("button", { name: "Show 5 days" })).toBeInTheDocument();
+    expect(within(bottomBar).getByRole("button", { name: /Switch to (dark|light) theme/ })).toBeInTheDocument();
+  });
+
   it("shows the saved number of days", async () => {
     await renderSignedIn({ settings: { dayCount: 5 } });
 

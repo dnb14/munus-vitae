@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { MoreVertical } from "./icons";
 
 type Props = {
   categoryName: string;
@@ -46,7 +47,7 @@ export function CategoryMenu({ categoryName, onClearDone, onDelete }: Props) {
         aria-expanded={open}
         onClick={() => setOpen((isOpen) => !isOpen)}
       >
-        <span aria-hidden="true">⋯</span>
+        <MoreVertical />
       </button>
       {open && (
         <div className="category-menu__items" role="menu" aria-label={`Actions for ${categoryName}`}>

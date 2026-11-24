@@ -11,7 +11,7 @@ import { addDays, type CalendarDate } from "./dates";
 export type Place = { day: CalendarDate } | { categoryId: string };
 
 /** The height of one Line, in pixels. The same everywhere in the app. */
-export const LINE_HEIGHT = 28;
+export const LINE_HEIGHT = 32;
 
 /** The dates the Day row shows: `count` consecutive days from `start`. */
 export function dayRowDates(start: CalendarDate, count: number): CalendarDate[] {

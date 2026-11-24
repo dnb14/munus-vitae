@@ -1,23 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import type { User } from "../backend/backend";
 import { BoardDragAndDrop } from "./BoardDragAndDrop";
+import { BottomBar } from "./BottomBar";
 import { dayRowDates, isPast, isReadOnly, LINE_HEIGHT, type Place } from "./boardModel";
 import { CategoryRow } from "./CategoryRow";
 import { addDays, type CalendarDate } from "./dates";
 import { DayRow } from "./DayRow";
+import { SearchBox } from "./SearchBox";
 import { TaskEditor } from "./TaskEditor";
 import type { TaskLineActions } from "./TaskLines";
 import { useEffectiveTheme } from "./theme";
-import { TopBar } from "./TopBar";
 import { useCategories } from "./useCategories";
 import { useSaveFailures } from "./useSaveFailures";
 import { useSettings } from "./useSettings";
 import { useTasks } from "./useTasks";
 import { useToday } from "./useToday";
 
-/** The signed-in page: the top bar, the Day row (60%) and the Category row (40%). */
-export function Board({ user }: { user: User }) {
+/** The signed-in page: the Day row (60%), the Category row (40%) and the bottom bar. */
+export function Board() {
   const { failures, showingMessage, dismissMessage } = useSaveFailures();
   const { settings, updateSettings } = useSettings(failures);
   const todayDate = useToday();
@@ -38,6 +38,8 @@ export function Board({ user }: { user: User }) {
   const { categories } = categoryActions;
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  // Typed into the search box; ticket 13 makes it filter the page.
+  const [searchQuery, setSearchQuery] = useState("");
   const editingTask = tasks?.find((task) => task.id === editingTaskId) ?? null;
 
   const taskActions: TaskLineActions = {
@@ -63,21 +65,6 @@ export function Board({ user }: { user: User }) {
       className="board"
       style={{ "--line-height": `${LINE_HEIGHT}px`, "--day-count": settings?.dayCount ?? 7 } as CSSProperties}
     >
-      <TopBar
-        user={user}
-        navigation={
-          settings && {
-            moveDays: (days) => setDayRowStart((start) => addDays(start, days)),
-            goToToday: () => setDayRowStart(todayDate),
-            dayCount: settings.dayCount,
-            setDayCount: (dayCount) => updateSettings({ dayCount }),
-            theme,
-            toggleTheme: () => updateSettings({ theme: theme === "dark" ? "light" : "dark" }),
-          }
-        }
-        activeTag={activeTag}
-        onClearTag={() => setActiveTag(null)}
-      />
       <BoardDragAndDrop
         tasks={tasks ?? []}
         categories={categories ?? []}
@@ -113,6 +100,22 @@ export function Board({ user }: { user: User }) {
           )}
         </section>
       </BoardDragAndDrop>
+      <BottomBar
+        navigation={
+          settings && {
+            start: dayRowStart,
+            moveDays: (days) => setDayRowStart((start) => addDays(start, days)),
+            goToToday: () => setDayRowStart(todayDate),
+            dayCount: settings.dayCount,
+            setDayCount: (dayCount) => updateSettings({ dayCount }),
+            theme,
+            toggleTheme: () => updateSettings({ theme: theme === "dark" ? "light" : "dark" }),
+          }
+        }
+        activeTag={activeTag}
+        onClearTag={() => setActiveTag(null)}
+      />
+      <SearchBox query={searchQuery} onQueryChange={setSearchQuery} />
       {editingTask && (
         <TaskEditor
           key={editingTask.id}

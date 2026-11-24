@@ -6,6 +6,7 @@ import { createInMemoryBackend, type InMemoryBackend } from "../backend/inMemory
 
 export function renderApp(backend: InMemoryBackend = createInMemoryBackend()) {
   const user = userEvent.setup();
+  // Tests start on the board unless they've gone to another address first (see goTo).
   const view = render(<App backend={backend} />);
   return { user, backend, ...view };
 }
@@ -41,4 +42,9 @@ async function waitForBoard() {
 export function setToday(year: number, month: number, day: number, hour = 10) {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(year, month - 1, day, hour));
+}
+
+/** Opens the app at another address, e.g. "/account", as when typing it into the address bar. */
+export function goTo(path: string) {
+  window.history.replaceState(null, "", path);
 }
