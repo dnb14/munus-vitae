@@ -97,10 +97,15 @@ body {
   margin: 0;
 }
 
+/* Every column, Day or Category, is the same fixed width: the board's width split by the
+   selected day count (--day-count, set on .board). Nothing grows with the text inside it,
+   and the rows keep their 60/40 split however many Tasks they hold. */
 .board {
   height: 100%;
   display: grid;
-  grid-template-rows: var(--top-bar-height) 3fr 2fr;
+  grid-template-rows: var(--top-bar-height) minmax(0, 3fr) minmax(0, 2fr);
+  container-type: inline-size;
+  --column-width: calc(100cqw / var(--day-count));
 }
 
 .top-bar {
@@ -135,7 +140,13 @@ body {
 .day-row,
 .category-row {
   min-height: 0;
-  overflow: auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* More Categories than fit: the Category row scrolls sideways, never down. */
+.category-row {
+  overflow-x: auto;
 }
 
 .day-row {
@@ -166,6 +177,7 @@ body {
 .day-row__columns {
   display: grid;
   height: 100%;
+  overflow: hidden;
 }
 
 .day-column {
@@ -206,7 +218,8 @@ body {
 }
 
 .category-column {
-  flex: 0 0 220px;
+  flex: 0 0 var(--column-width);
+  min-width: 0;
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -222,7 +235,6 @@ body {
 
 .category-column--add {
   border-right: none;
-  flex-basis: 180px;
 }
 
 .category-column__header {
@@ -327,6 +339,7 @@ body {
 .lines {
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

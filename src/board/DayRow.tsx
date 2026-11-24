@@ -16,7 +16,7 @@ export function DayRow({ start, count, today, tasks, onAddTask, taskActions }: P
   const dates = dayRowDates(start, count);
 
   return (
-    <div className="day-row__columns" style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
+    <div className="day-row__columns" style={{ gridTemplateColumns: `repeat(${count}, var(--column-width))` }}>
       {dates.map((date) => {
         const isToday = date === today;
         const past = isPast(date, today);

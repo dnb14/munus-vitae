@@ -59,7 +59,10 @@ export function Board({ user }: { user: User }) {
   ];
 
   return (
-    <div className="board" style={{ "--line-height": `${LINE_HEIGHT}px` } as CSSProperties}>
+    <div
+      className="board"
+      style={{ "--line-height": `${LINE_HEIGHT}px`, "--day-count": settings?.dayCount ?? 7 } as CSSProperties}
+    >
       <TopBar
         user={user}
         navigation={
