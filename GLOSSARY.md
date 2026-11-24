@@ -18,8 +18,12 @@ One column in the Day row, standing for a single calendar date.
 _Avoid_: Day slot, date bucket
 
 **Category row**:
-The bottom half of the page, holding one Category column per Category.
+The bottom half of the page, holding one Category column per Category in the selected Area.
 _Avoid_: Backlog, lists
+
+**Area**:
+A user-defined, named group of Categories (e.g. "Personal", "Work"), shown as a tab between the Day row and the Category row. Only the selected Area's Categories are shown. Every Category belongs to exactly one Area.
+_Avoid_: Board (the whole page), space, workspace, category group
 
 **Category**:
 A user-defined, named grouping of Tasks that aren't scheduled on a day (e.g. "Errands", "Reading"). Shown as a column in the Category row.
